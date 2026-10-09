@@ -1,77 +1,78 @@
 # Vercel deployment target for Sousbot
 
 **Status: architecture decision / deployment checklist, not a deployed application.**  
-**Decision:** Vercel hosts BOTH the React/Vite frontend and Node/Express API as independent Vercel projects sourced from the same `clemborg/sousbot` monorepo. Supabase hosts PostgreSQL and Auth.
+**Decision:** One Vercel project rooted at `apps/api` hosts the React/Vite UI (static assets in `public/`) and the Express API (`/api/v1/*`) on the same origin. Supabase hosts PostgreSQL and Auth.
 
-## Why two projects?
+## Why one project?
 
 ```text
                GitHub: clemborg/sousbot
                            |
-              +------------+------------+
-              |                         |
-     Vercel project: web         Vercel project: API
-         apps/web                    apps/api
-       React + Vite                Express function
-              |                         |
-              |     HTTPS/JSON API      |
-              +------------------------>+
-                                        |
-                                     Supabase
-                                PostgreSQL + Auth
+              Vercel project (root: apps/api)
+              +---------------------------+
+              |  public/  → Vite dist CDN |
+              |  Express  → /api/v1/*     |
+              +---------------------------+
+                           |
+                        Supabase
+                   PostgreSQL + Auth
 ```
 
-This retains the user's chosen **React + TypeScript + Node + PostgreSQL/Supabase** stack. No Next.js migration is required. Vercel natively supports Vite for frontends and Express as a Function.
+This keeps **React + TypeScript + Node + PostgreSQL/Supabase** without Next.js. The Vite build is copied to [`apps/api/public/`](../apps/api/public/) during deploy ([`scripts/sync-web-to-api-public.mjs`](../scripts/sync-web-to-api-public.mjs)). Vercel serves `public/**` on the CDN; Express handles API routes ([Express on Vercel](https://vercel.com/docs/frameworks/backend/express) — do not rely on `express.static()` on Vercel).
 
-The public client builds with `VITE_API_BASE_URL=https://<API_PROJECT_HOST>`. It sends Supabase access tokens to Express for authenticated actions; user IDs are verified server-side. For now, the API permits the configured frontend origin with `WEB_ORIGIN`.
+The browser calls `/api/v1/...` on the same host when `VITE_API_BASE_URL` is unset. Supabase access tokens are sent to Express for authenticated actions; user IDs are verified server-side. CORS uses `WEB_ORIGIN`, defaulting to `https://$VERCEL_URL` when unset on Vercel.
 
 ## One-time Vercel setup (after local DB smoke tests)
 
 **Checklist:** For checkbox-by-checkbox steps (env vars, auth, privacy smoke), use [VERCEL_IMPORT_CHECKLIST.md](VERCEL_IMPORT_CHECKLIST.md).
 
-1. Import GitHub repo `clemborg/sousbot` twice into Vercel:
-   - **Web**: root directory `apps/web`, framework Vite, Node 22+, output directory `dist`.
-   - **API**: root directory `apps/api`, framework Express/Other as autodetected, Node 22+; Vercel recognizes `src/index.ts`, where the app is exported as default. The local server listener is not invoked in Vercel.
-2. Enable access to shared workspace code outside root directory if Vercel doesn't already include it. Ensure `packages/shared` builds before web/API builds (the shared package currently resolves its `dist/index.js` artifact); verify Vercel's build commands on the first preview rather than assuming npm workspaces compile automatically.
-3. Configure **web** environment variables (Preview and Production):
-   - `VITE_SUPABASE_URL` = Supabase project HTTPS URL.
-   - `VITE_SUPABASE_PUBLISHABLE_KEY` = Supabase publishable browser key.
-   - `VITE_API_BASE_URL` = full HTTPS origin of deployed API project (do not include `/api/v1`).
-4. Configure **API** environment variables (Preview and Production):
-   - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` for verifying user access tokens.
-   - `DATABASE_URL` = **Supabase shared transaction pooler** PostgreSQL URI (port 6543), with TLS (`sslmode=require`); **secret**.
-   - `WEB_ORIGIN` = actual frontend origin allowed by Express CORS. For preview hostnames use explicitly approved origins; do not blindly allow every origin.
-5. Configure Supabase Auth redirect allowlist for production and approved preview frontend URLs. Confirm email-login returns to the correct frontend host.
-6. Test GET `/api/v1/health` on API host, GET `/api/v1/recipes` from frontend, login, a cooking-session POST, and revisit history under **two distinct users**. Check all unexpected anonymous requests fail to see private notes.
-7. For nested React client routes, place a SPA fallback in `apps/web/vercel.json` when adding URL-based routing. No rewrite is required just for the current in-app local component view, but deep links will need it.
-8. Attach a custom domain if desired. API and web can remain separate hostnames; a reverse proxy/same-origin rewrite is a possible later refinement.
-9. Keep schema migrations as a separate reviewed operation and ingestion/auditing as scheduled GitHub Actions or another background worker. A Vercel Function is **not** a permanently running Node server or cron worker.
+1. Import GitHub repo `clemborg/sousbot` **once**:
+   - **Root Directory:** `apps/api` (Framework: Express), Node 22+.
+   - Vercel recognizes `src/index.ts` with a default export; `listen()` runs only outside Vercel.
+   - Install/build commands live in [`apps/api/vercel.json`](../apps/api/vercel.json): monorepo root install, build `@sousbot/shared`, `@sousbot/web`, `@sousbot/api`, then sync web `dist` → `public/`.
+2. **Environment variables** on the single project (Preview and Production as appropriate):
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `VITE_SUPABASE_URL` | Embedded at **web** build time |
+   | `VITE_SUPABASE_PUBLISHABLE_KEY` | Embedded at web build time |
+   | `VITE_API_BASE_URL` | **Leave empty / omit** (same-origin) |
+   | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | API JWT verification |
+   | `DATABASE_URL` | Supabase **transaction pooler** port **6543**, TLS (`sslmode=require`); **secret** |
+   | `WEB_ORIGIN` | Optional; defaults to `https://$VERCEL_URL`. Set for a **custom domain**. |
+
+3. Configure Supabase Auth: Site URL = your Vercel deployment URL; redirect allowlist includes production (and preview URLs if testing magic links on previews).
+4. Smoke tests: `GET /api/v1/health`, load `/`, hard refresh `/` (SPA rewrite in `vercel.json`), browse recipes, login, cooking-session POST under two users.
+5. Attach a custom domain if desired (set `WEB_ORIGIN` to match).
+6. Keep schema migrations as a separate reviewed operation; ingestion stays in GitHub Actions or another worker, not a long-lived Vercel process.
+
+## Local and `vercel dev`
+
+- **Day-to-day dev:** `npm run dev` — Vite on :5173 with `/api` proxied to :4000.
+- **Production-like check:** From repo root, `npm run build` (includes sync to `apps/api/public/`). Then `cd apps/api && npx vercel dev` (Vercel CLI ≥ 47.0.5): confirm `/` serves the UI and `GET /api/v1/health` succeeds with local env vars.
 
 ## Database connection on Functions
 
-The `pg` connection pool is created once at module scope. A conventional always-on Node server may use several connections, but multiple warm Vercel Functions can scale concurrently. Therefore the code uses `max: 1` when `VERCEL` is present. Use Supabase transaction pooling for this runtime; node-postgres does not create named prepared statements by default, but do not add named prepared statements or session-persistent SQL when using transaction mode.
+The `pg` pool uses `max: 1` when `VERCEL` is set. Use Supabase transaction pooling; avoid named prepared statements in transaction mode.
 
-For database migrations (including `supabase/migrations/0001_foundation.sql`), use the Supabase SQL editor or a direct/session mode connection, NOT the function's runtime URL.
+For migrations (`supabase/migrations/*.sql`), use the Supabase SQL editor or a session/direct connection, not the function runtime URL.
 
 ## Security requirements
 
 - Never put `DATABASE_URL`, `sb_secret_*`, or service-role credentials in `VITE_*` variables or checked-in files.
-- Supabase **publishable** keys are intended for client-side exposure, but database passwords and service-role keys are not.
-- API must scope `user_books` and `cooking_sessions` to the Supabase-authenticated user. Database superuser-level connections may bypass RLS.
-- Never cache personalized GET responses or user notes in public CDN caches.
-- Set environment values separately for Preview and Production, and explicitly review how API CORS works for ephemeral preview URLs.
+- API must scope private data to the Supabase-authenticated user.
+- Never cache personalized GET responses in public CDN caches.
+- Set Preview vs Production env vars deliberately; preview should not mutate production user data without intent.
 
 ## Deployment risks still to validate
 
-- Monorepo shared package resolution/build commands and Vercel's auto-detection of the Express entry point.
-- Connecting to Supabase with SSL transaction pooling and scaling under multiple concurrent Functions.
-- Preview URL + Supabase OAuth/email redirect configuration.
-- API requests across two Vercel project origins (CORS), versus optional same-origin rewrite.
-- Persistent cookbook data not yet migrated from Clemport; Vercel deployment alone will have an empty catalog.
+- Monorepo build + sync on first Vercel preview.
+- Supabase SSL transaction pooling under concurrent Functions.
+- Preview URL + Supabase email redirect configuration.
+- Empty catalog until recipes are imported/seeded on the target DB.
 
 ## References (official)
 
 - Vercel Express: https://vercel.com/docs/frameworks/backend/express
-- Vercel Vite: https://vercel.com/docs/frameworks/frontend/vite
 - Vercel monorepos: https://vercel.com/docs/monorepos
 - Supabase Postgres connections: https://supabase.com/docs/guides/database/connecting-to-postgres

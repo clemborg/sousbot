@@ -2,7 +2,7 @@
 
 Use this after local Supabase migrations and a successful `npm run db:seed` (or production import). Maps to GitHub issues [#1](https://github.com/clemborg/sousbot/issues/1)–[#3](https://github.com/clemborg/sousbot/issues/3) and D0–D4 in [VERCEL_RELEASE_SCOPE.md](VERCEL_RELEASE_SCOPE.md).
 
-**Creating Vercel projects requires your dashboard login** — commits do not auto-create projects.
+**Creating a Vercel project requires your dashboard login** — commits do not auto-create projects.
 
 ## Prerequisites
 
@@ -11,40 +11,35 @@ Use this after local Supabase migrations and a successful `npm run db:seed` (or 
 - [ ] Catalog seeded or imported (`npm run db:seed` for dev fixtures, or `npm run import:recipes:publish` for `recipes/`).
 - [ ] GitHub repo `clemborg/sousbot` accessible to your Vercel team/account.
 
-## D1 — Project A: `sousbot-web`
+## D1 — Single project: `sousbot` (or your chosen name)
 
 - [ ] Vercel → **Add New Project** → import `clemborg/sousbot`.
-- [ ] **Root Directory:** `apps/web` (Framework: Vite).
-- [ ] Confirm install/build match [apps/web/vercel.json](../apps/web/vercel.json) (monorepo root install + shared package build).
+- [ ] When Git Import lists directories, choose **`apps/api` only** (Express). Do **not** create a second project for `apps/web`.
+- [ ] **Root Directory:** `apps/api`.
+- [ ] Confirm install/build match [apps/api/vercel.json](../apps/api/vercel.json) (monorepo root install, shared + web + api build, sync to `public/`).
+- [ ] Node **22+**.
 - [ ] **Environment variables** (Preview + Production as appropriate):
   - [ ] `VITE_SUPABASE_URL`
   - [ ] `VITE_SUPABASE_PUBLISHABLE_KEY`
-  - [ ] `VITE_API_BASE_URL` → full HTTPS origin of API project (no `/api/v1` suffix)
-- [ ] Deploy preview; open site root loads React shell.
-- [ ] Hard refresh on `/` (SPA rewrite in `vercel.json`) — not a Vercel 404.
-
-## D1 — Project B: `sousbot-api`
-
-- [ ] Second Vercel project, same repo, **Root Directory:** `apps/api`.
-- [ ] Confirm [apps/api/vercel.json](../apps/api/vercel.json) monorepo build commands.
-- [ ] **Environment variables** (secrets in Vercel only):
+  - [ ] `VITE_API_BASE_URL` — **leave unset or empty** (same-origin `/api/v1`)
   - [ ] `SUPABASE_URL`
   - [ ] `SUPABASE_PUBLISHABLE_KEY`
   - [ ] `DATABASE_URL` → Supabase **transaction pooler** port **6543**, TLS (`sslmode=require`)
-  - [ ] `WEB_ORIGIN` → exact web origin (production URL; add preview URL when testing previews)
-- [ ] `GET https://<api-host>/api/v1/health` → `{"status":"ok","database":"connected"}`.
+  - [ ] `WEB_ORIGIN` — optional; omit to use `https://$VERCEL_URL`. Set when using a **custom domain**.
+- [ ] Deploy preview; open site root loads React shell.
+- [ ] Hard refresh on `/` (SPA rewrite in `vercel.json`) — not a Vercel 404.
+- [ ] `GET https://<your-host>/api/v1/health` → `{"status":"ok","database":"connected"}`.
 - [ ] Missing/invalid `DATABASE_URL` fails closed (no stack traces or secrets in response).
 
-## Cross-project wiring
+## Same-origin wiring
 
-- [ ] From browser on web URL: network requests hit `VITE_API_BASE_URL` (not localhost).
-- [ ] CORS: API allows only `WEB_ORIGIN`; no `*` on authenticated routes.
+- [ ] From browser on your Vercel URL: API requests go to `/api/v1/...` on the **same host** (not localhost, not a second domain).
 - [ ] Anonymous `GET /api/v1/recipes?q=miso` returns published fixtures after seed.
 
 ## D2 — Auth (Supabase)
 
-- [ ] Dashboard → Authentication → URL Configuration: Site URL = production web URL.
-- [ ] Redirect allowlist includes production web URL and each **approved** preview web URL.
+- [ ] Dashboard → Authentication → URL Configuration: Site URL = production Vercel URL (or custom domain).
+- [ ] Redirect allowlist includes that URL and each **approved** preview URL.
 - [ ] Magic link: sign in from web → email → lands back on same host; session persists on reload.
 
 ## D3 — Privacy smoke (manual)
@@ -59,6 +54,10 @@ Use this after local Supabase migrations and a successful `npm run db:seed` (or 
 - [ ] Preview vs production env vars documented; avoid preview writes to production user data without intent.
 - [ ] Rollback: redeploy previous Vercel deployment; do **not** run SQL migrations from Functions.
 - [ ] One pilot user completes search → recipe → note without developer help.
+
+## Optional local smoke before push
+
+- [ ] `npm run build` then `cd apps/api && npx vercel dev` — UI + `/api/v1/health` (CLI ≥ 47.0.5).
 
 ## References
 

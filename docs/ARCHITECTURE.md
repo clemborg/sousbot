@@ -9,7 +9,7 @@
 - **Validation/shared contracts:** Zod schemas in a shared workspace.
 - **Search:** PostgreSQL relational ingredient matching, aliases and title full-text/trigram indexes. No LLM in request path for MVP.
 - **Catalog ingestion:** version-controlled raw recipe JSON and audit ledgers; idempotent import into staging; controlled promotion to published catalog.
-- **Deployment target (decided): Vercel**. Deploy the React/Vite web frontend and Express API as **two Vercel projects from this npm-workspace monorepo** (`apps/web` and `apps/api`). Supabase remains the database/Auth host; background recipe ingestion and auditing remain independent jobs, not resident Express processes. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
+- **Deployment target (decided): Vercel**. One project rooted at `apps/api`: Vite build synced to `public/`, Express serves `/api/v1`. Supabase remains the database/Auth host; background recipe ingestion and auditing remain independent jobs, not resident Express processes. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
 
 ## Monorepo target
 
@@ -72,6 +72,6 @@ At time of scoping, **Sousbot does not yet contain the 155 JSON recipe files** i
 
 - Vercel supports Express through a Node.js Function. The API module exports `app` and skips `app.listen()` in the Vercel environment, while keeping the local development listener.
 - A Vercel Function instance must **not** create a 10-connection Postgres pool; use a one-connection pool on Vercel with the Supabase **transaction pooler** endpoint (port 6543). Keep the pool at module scope for warm-instance reuse, use TLS, and avoid named prepared statements. A separate direct/session connection may be used for reviewed DB migrations.
-- The browser builds from `apps/web` and calls the deployed API via `VITE_API_BASE_URL`. Configure the backend's `WEB_ORIGIN` to the exact frontend origin; preview-origin policy requires explicit work before public preview releases.
-- Browser routes will need the Vite SPA fallback for deep links. Both Vercel projects must build `packages/shared` before their app package; preserve npm workspace installs.
+- The browser builds from `apps/web` and calls `/api/v1` on the same host when `VITE_API_BASE_URL` is unset. `WEB_ORIGIN` defaults to `https://$VERCEL_URL` on Vercel; set explicitly for a custom domain.
+- SPA fallback and monorepo build live in `apps/api/vercel.json`; `packages/shared` must build before web and API.
 - Deploying the web and API does **not** automatically create tables or import the cookbook collection. Keep migrations and recipe ingestion separately controlled.

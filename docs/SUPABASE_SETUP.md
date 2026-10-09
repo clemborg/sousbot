@@ -77,6 +77,6 @@ Until you run `npm run db:seed` or `npm run import:recipes:publish`, Discover sh
 
 ## Future hosting target: Vercel
 
-Sousbot is intended for **Vercel**, with `apps/web` and `apps/api` as separate Vercel projects linked to the same GitHub monorepo. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md) and the step-by-step [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md).
+Sousbot is intended for **Vercel**, as one project rooted at `apps/api` (UI + API same origin). See [Vercel deployment plan](VERCEL_DEPLOYMENT.md) and the step-by-step [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md).
 
 For the Express API **on Vercel**, obtain the **Supabase transaction-pooler (port 6543)** connection string, not the direct host or the session pooler. Use TLS (`sslmode=require` in the connection string), a small client pool (1 per function instance), and no named prepared statements. Use a direct/session-capable connection for database migrations. Keep all connection strings out of the web bundle.

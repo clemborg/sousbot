@@ -16,7 +16,7 @@ Sousbot is an ingredient-first recipe discovery web app. It maintains a shared r
 7. [Implementation roadmap](ROADMAP.md) — sequenced deliverables with explicit definition of done.
 8. [First Vercel pilot scope](VERCEL_RELEASE_SCOPE.md) — launch criteria, two-project setup, env matrix, GitHub issues and blockers.
 9. [Vercel deployment runbook](VERCEL_DEPLOYMENT.md) — hosting details and deployment risks.
-10. [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md) — owner dashboard steps for two projects.
+10. [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md) — owner dashboard steps for one project (`apps/api`).
 11. [Approved design system](DESIGN_SYSTEM.md) — warm illustrated UI direction, tokens, screen contracts and implementation milestones.
 
 ## Principles

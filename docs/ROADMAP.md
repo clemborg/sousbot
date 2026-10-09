@@ -44,11 +44,11 @@ This is the sequenced execution backlog. Check items only once committed/tested;
 
 ## Deployment milestone — Vercel (after database/local vertical slice)
 
-- [~] Connect **two Vercel projects** to this monorepo: `apps/web` as Vite and `apps/api` as Node/Express Function (vercel.json build/install hints committed; projects not imported).
-- [ ] Validate shared npm-workspace builds in Vercel, set the API URL for browser builds, and confirm web-to-API requests in preview and production.
-- [ ] Configure Vercel encrypted environment variables: public web Supabase URL/publishable key, API Supabase URL/publishable key, protected `DATABASE_URL` from Supabase transaction pooler, `WEB_ORIGIN`. Keep migration-only DB credentials outside the client.
+- [~] Connect **one Vercel project** rooted at `apps/api` (Express + synced Vite `public/`; vercel.json committed; project not imported).
+- [ ] Validate shared npm-workspace build + sync on Vercel; confirm same-origin `/api/v1` requests in preview and production.
+- [ ] Configure Vercel encrypted environment variables: `VITE_*` Supabase URL/publishable key, API Supabase URL/publishable key, protected `DATABASE_URL` from Supabase transaction pooler; optional `WEB_ORIGIN` for custom domain. Keep migration-only DB credentials outside the client.
 - [ ] Check SSL and Postgres pool size=1 in Functions. Verify health, ingredient search, Supabase Auth redirect and private cooking-history isolation on a deployed preview.
-- [x] Set up Vite client-side route fallback (`apps/web/vercel.json` rewrites).
+- [x] Set up Vite client-side route fallback (`apps/api/vercel.json` rewrites).
 - **Acceptance:** same public web app works via Vercel, a verified signed-in user can create/revisit a dated cooking note, and there are no client-visible database credentials.
 
 ## Phase 4 — hardening and unattended ingestion

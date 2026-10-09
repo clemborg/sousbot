@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && npm install --no-audit --no-fund",
-  "buildCommand": "cd ../.. && npm run build -w @sousbot/shared && npm run build -w @sousbot/api"
+  "buildCommand": "cd ../.. && npm run build -w @sousbot/shared && npm run build -w @sousbot/web && npm run build -w @sousbot/api && node scripts/sync-web-to-api-public.mjs",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

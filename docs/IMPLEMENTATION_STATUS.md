@@ -12,7 +12,7 @@
 - Public catalog + personal endpoints: search (with optional my-books filter), recipe detail, books shelf, cooking-session CRUD.
 - Warm illustrated UI in `apps/web` (single-page shell; design tokens in CSS).
 - Data dirs: `recipes/fixtures/` (seed data), `audit/`, `ingestion/runs/` (gitignored JSON logs), `automation/ingestion/`.
-- Vercel monorepo `installCommand` / `buildCommand` on both `apps/web` and `apps/api`.
+- Vercel monorepo `installCommand` / `buildCommand` + SPA rewrites on `apps/api`; web `dist` syncs to `apps/api/public/` on `npm run build`.
 
 ## CI verification
 

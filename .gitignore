@@ -7,3 +7,5 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 ingestion/runs/*.json
+apps/api/public/**
+!apps/api/public/.gitkeep

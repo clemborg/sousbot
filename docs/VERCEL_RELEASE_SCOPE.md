@@ -8,20 +8,19 @@ This is the **delivery contract for the first Vercel pilot**, not a promise that
 ## Architecture / fixed decisions
 
 ```text
-GitHub main ── Vercel project A (apps/web / React + Vite)
-                │   public URL; VITE_API_BASE_URL
-                ▼
-             Vercel project B (apps/api / Express Function)
-                │   private DATABASE_URL; Supabase JWT verification
+GitHub main ── Vercel project (root: apps/api)
+                │   public/ CDN + Express /api/v1
+                │   same origin; optional WEB_ORIGIN / VERCEL_URL
                 ▼
             Supabase Postgres + Supabase Auth
 
 GitHub recipe/audit archive → separately controlled importer → Supabase catalog
 ```
 
-- **Hosting:** two Vercel projects from `clemborg/sousbot` via npm workspaces, not Next.js.
+- **Hosting:** one Vercel project from `clemborg/sousbot` (`apps/api` root), npm workspaces, not Next.js.
 - **Data:** Supabase project `kkdswyfeznxrntungivm`, which is already identified in local example configuration. Keep its database password out of GitHub and chat; publishable keys may be used in browser builds, service-role/database credentials must never be there.
 - **API:** `apps/api/src/index.ts` exports Express's default application for Vercel Functions and only calls `listen()` outside Vercel.
+- **UI:** Vite build synced to `apps/api/public/` at build time; SPA rewrites in `apps/api/vercel.json`.
 - **Function → Postgres:** Supabase transaction pooler port 6543, TLS, conservative pool size (existing `pg.Pool` max=1 per Vercel function instance). Avoid named prepared statements/connection session state; migrations via separate approved channel.
 - **Authorization:** verified Supabase JWT on API; private queries always constrained by verified user ID even when privileged DB connection bypasses RLS. Public catalog only includes `published` recipes.
 - **Research automation:** GitHub/scheduled worker, not dependent on permanent server processes or the Vercel web request runtime.
@@ -39,51 +38,51 @@ GitHub recipe/audit archive → separately controlled importer → Supabase cata
 
 **Additional P0 product gap:** current scaffold provides basic searching, book ownership and create/delete cooking logs, but currently lacks completed search filters, edit-log UI, ingredient alias ranking, robust pagination, automated authorization tests and production hardening. Do not confuse a passing build with these workflows being finished.
 
-## Vercel projects — provisional configuration
+## Vercel project — provisional configuration
 
-| Property | Web project | API project |
+| Property | Value |
+|---|---|
+| Proposed project name | `sousbot` (or `sousbot-app`) |
+| Git repository | `clemborg/sousbot` |
+| Root Directory | `apps/api` |
+| Framework | Express / Node.js Function |
+| Node | 22+ |
+| API entry | `src/index.ts` default export |
+| Static UI | `public/` (synced from `apps/web/dist` at build) |
+| Shared dependency | `@sousbot/shared`; build before web and API |
+| Routing | SPA fallback + Express routes under `/api/v1` in [`apps/api/vercel.json`](../apps/api/vercel.json) |
+
+**Build configuration validation required:** Vercel's monorepo install/root resolution must discover the npm-workspace root and run the full build + sync on the first preview. GitHub Actions verifies root `npm run build`, **not** the Vercel environment until a deploy runs.
+
+## Environment variable matrix (single project)
+
+| Variable | Required | Exposure / notes |
 |---|---|---|
-| Proposed project | `sousbot-web` | `sousbot-api` |
-| Git repository | `clemborg/sousbot` | `clemborg/sousbot` |
-| Root Directory | `apps/web` | `apps/api` |
-| Framework | Vite | Express / Node.js Function |
-| Node | 22+ | 22+ |
-| Entrypoint | `index.html` / Vite | `src/index.ts` default export |
-| Output | `dist` | Vercel-managed Function (no frontend output dir) |
-| Shared dependency | `@sousbot/shared`; build it before frontend | `@sousbot/shared`; build it before API |
-| Routing | SPA fallback in `apps/web/vercel.json` | Express routes under `/api/v1` |
+| `VITE_SUPABASE_URL` | Yes | Public project URL; embedded at web build |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Publishable client key; embedded at web build |
+| `VITE_API_BASE_URL` | No | Omit for same-origin `/api/v1` |
+| `SUPABASE_URL` | Yes | Public project URL (API runtime) |
+| `SUPABASE_PUBLISHABLE_KEY` | Yes | Token verification on API |
+| `DATABASE_URL` | Yes | Secret; transaction pooler 6543 + TLS |
+| `WEB_ORIGIN` | No | Defaults to `https://$VERCEL_URL`; set for custom domain |
+| `NODE_ENV`, `VERCEL`, `VERCEL_URL` | Platform | Vercel sets where applicable |
 
-**Build configuration validation required:** Vercel's monorepo install/root resolution must discover the npm-workspace root and build `packages/shared` before either dependent project. The repository's GitHub Actions build verifies the root workspaces, **not** the per-project Vercel build environment. Do not claim the build commands work on Vercel until their first preview deployments run. Override project install/build commands as needed based on actual Vercel logs.
-
-## Environment variable matrix
-
-| Variable | Web | API | Exposure / provenance |
-|---|---|---|---|
-| `VITE_SUPABASE_URL` | Yes | No | Public project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | No | Publishable client key |
-| `VITE_API_BASE_URL` | Yes | No | Public HTTPS origin of API project |
-| `SUPABASE_URL` | No | Yes | Public project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | No | Yes | Publishable key for token verification |
-| `DATABASE_URL` | **Never** | Yes | Secret; Supabase transaction pooler with TLS |
-| `WEB_ORIGIN` | No | Yes | Explicit allowed frontend origin for CORS |
-| `NODE_ENV`, `VERCEL` | Platform | Platform | Vercel handles these where applicable |
-
-**Environment separation:** production and preview variables are managed separately. Default to a **test/preview DB or isolated dataset** until rollout strategy is explicit; do not let anonymous preview links mutate production user data without review. Set Supabase Auth redirect URLs for approved origins. Preview URLs can change; evaluate Vercel Related Projects / stable preview aliases / controlled CORS list rather than using wildcard CORS.
+**Environment separation:** production and preview variables are managed separately. Default to a **test/preview DB or isolated dataset** until rollout strategy is explicit; do not let anonymous preview links mutate production user data without review. Set Supabase Auth redirect URLs for approved origins.
 
 ## Work packages in execution order
 
 ### D0 — deployment prerequisites
 
-1. Confirm the Vercel account/team can import the GitHub repository and supports two Vercel projects.
+1. Confirm the Vercel account/team can import the GitHub repository.
 2. Preserve deployment credentials in Vercel encrypted env settings, not source files.
 3. Review/apply `supabase/migrations/0001_foundation.sql` against the intended Supabase project (not yet run).
 4. Establish production vs preview database/isolation strategy.
 
 ### D1 — get code onto Vercel
 
-1. Create web and API projects; verify Vercel monorepo workspace build and Vite SPA routing.
+1. Create one project rooted at `apps/api`; verify monorepo build, sync to `public/`, and Vite SPA routing.
 2. Confirm an unauthenticated API read returns a controlled response, not a 500 from missing configuration; health endpoint must verify DB connection.
-3. Set `VITE_API_BASE_URL` and safe cross-origin CORS; verify network requests from the rendered React page.
+3. Verify network requests from the rendered React page hit same-origin `/api/v1`.
 
 ### D2 — connect catalog and identity
 
@@ -107,7 +106,7 @@ GitHub recipe/audit archive → separately controlled importer → Supabase cata
 
 ## Acceptance tests / definition of ready
 
-- [ ] Both Vercel projects build from the same commit with npm-workspace shared-package imports resolved.
+- [ ] Vercel project builds from `main` with npm-workspace shared-package imports resolved and web assets in `public/`.
 - [ ] Frontend loads and API health checks DB; no secrets in browser bundle.
 - [ ] A search for **miso**, then a separate search for **brussels sprouts**, does not erroneously combine the two.
 - [ ] A published recipe opens and exposes only independently supported author/book/page information.
@@ -135,7 +134,6 @@ GitHub recipe/audit archive → separately controlled importer → Supabase cata
 
 ## Evidence
 
-- [Vercel Express framework](https://vercel.com/docs/frameworks/backend/express) — recognized `src/index.ts` default export and Function runtime.
-- [Vercel Vite framework](https://vercel.com/docs/frameworks/frontend/vite) — SPA deep-link rewrites.
-- [Vercel monorepos](https://vercel.com/docs/monorepos) — separate project root directories and workspace detection.
+- [Vercel Express framework](https://vercel.com/docs/frameworks/backend/express) — recognized `src/index.ts` default export, `public/` for static assets.
+- [Vercel monorepos](https://vercel.com/docs/monorepos) — project root directory and workspace detection.
 - [Supabase Postgres connections](https://supabase.com/docs/guides/database/connecting-to-postgres) — transaction pooler use for serverless, and prepared-statement caveat.
