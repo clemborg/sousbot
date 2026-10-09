@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-export const searchSchema = z.object({ q: z.string().trim().max(100).default(''), limit: z.coerce.number().int().min(1).max(50).default(20) });
+const queryBool = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .optional()
+  .transform(v => v === true || v === 'true' || v === '1');
+
+export const searchSchema = z.object({
+  q: z.string().trim().max(100).default(''),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  myBooksOnly: queryBool,
+});
 export const cookingSessionInputSchema = z.object({
   cookedOn: z.iso.date(),
   notes: z.string().max(4000).nullable().optional(),

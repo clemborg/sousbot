@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
 
 :root { font-family: "DM Sans", ui-sans-serif, sans-serif; color: #252922; background: #f8f7f1; font-synthesis: none; }
 * { box-sizing: border-box; }
@@ -34,6 +35,7 @@ h1,h2 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; }
 .results { max-width: 1190px; margin: 0 auto; padding: 65px 30px 100px; }
 .section-top { display: flex; align-items: end; justify-content: space-between; gap: 15px; margin-bottom: 30px; }
 .section-top h2 { font-size: 38px; margin: 10px 0 0; }
+.my-books-filter { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: #686d63; font-weight: 500; }
 .result-count { font-size: 13px; color: #6d7769; white-space: nowrap; }
 .recipe-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 17px; }
 .recipe-card { display: flex; min-height: 246px; text-align: left; flex-direction: column; align-items: start; padding: 25px; background: #fff; border: 1px solid #e0e2db; border-radius: 11px; color: #272e27; transition: transform .15s, box-shadow .15s; }
@@ -103,7 +105,6 @@ footer span { font-weight: 400; letter-spacing: 0; }
 }
 
 /* Sousbot illustrated design direction — first implementation pass */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
 :root{--color-bg:#FAF7EF;--color-surface:#FFFFFF;--color-sage:#2F5233;--color-sage-light:#E5EEDC;--color-ink:#1B1B1B;--color-muted:#6B6B6B;--color-gold:#C6A96B;--color-gold-light:#F3E6CB;--color-error:#C35B5B;--font-display:'Fraunces',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;background:var(--color-bg);color:var(--color-ink);font-family:var(--font-body)}
 body{background:var(--color-bg)}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #a8854d;outline-offset:3px}

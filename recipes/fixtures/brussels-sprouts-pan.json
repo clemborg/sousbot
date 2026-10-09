@@ -1,0 +1,21 @@
+{
+  "title": "Pan-Roasted Brussels Sprouts",
+  "authors": ["Sousbot fixture"],
+  "servings": "2 as a side",
+  "sourceUrl": "https://www.seriouseats.com/pan-roasted-brussels-sprouts-recipe",
+  "ingredients": [
+    "1 lb Brussels sprouts, trimmed and halved",
+    "2 tbsp olive oil",
+    "Kosher salt",
+    "Freshly ground black pepper",
+    "1 tbsp unsalted butter",
+    "1 tsp lemon juice"
+  ],
+  "method": [
+    "Heat oil in a large skillet over medium-high heat.",
+    "Add sprouts cut-side down and cook without stirring until deeply browned.",
+    "Season, add butter, toss, and finish with lemon juice."
+  ],
+  "source_validation": "web publisher index",
+  "_meta": { "publish": true }
+}

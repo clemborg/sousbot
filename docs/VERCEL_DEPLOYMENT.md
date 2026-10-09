@@ -27,6 +27,8 @@ The public client builds with `VITE_API_BASE_URL=https://<API_PROJECT_HOST>`. It
 
 ## One-time Vercel setup (after local DB smoke tests)
 
+**Checklist:** For checkbox-by-checkbox steps (env vars, auth, privacy smoke), use [VERCEL_IMPORT_CHECKLIST.md](VERCEL_IMPORT_CHECKLIST.md).
+
 1. Import GitHub repo `clemborg/sousbot` twice into Vercel:
    - **Web**: root directory `apps/web`, framework Vite, Node 22+, output directory `dist`.
    - **API**: root directory `apps/api`, framework Express/Other as autodetected, Node 22+; Vercel recognizes `src/index.ts`, where the app is exported as default. The local server listener is not invoked in Vercel.

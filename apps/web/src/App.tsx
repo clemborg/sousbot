@@ -1,67 +1,21 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { createClient, type Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import type { CookingSession, RecipeDetail, RecipeSummary } from '@sousbot/shared';
+import { RecipeCard } from './components/RecipeCard';
+import { api } from './lib/api';
+import { clearAuthIntent, readAuthIntent, writeAuthIntent } from './lib/auth-intent';
+import { friendlyDate, localToday } from './lib/dates';
+import { supabase } from './lib/supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-const supabase = supabaseUrl && supabaseKey && !supabaseKey.startsWith('replace_')
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
-const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
 type Book = { id: string; title: string; slug: string };
 type OwnedBook = { id: string; bookId: string; title: string };
-const AUTH_INTENT_KEY = 'sousbot:pending-auth-intent';
-type AuthIntent = { view: 'discover' | 'books'; recipeSlug: string | null; bookId: string | null; cookedOn: string; notes: string };
-function readIntent(): AuthIntent | null { try { const raw = sessionStorage.getItem(AUTH_INTENT_KEY); return raw ? JSON.parse(raw) as AuthIntent : null; } catch { return null; } }
 const suggestions = ['Brussels sprouts', 'Miso', 'Chicken', 'Mushrooms', 'Pasta'];
 
-function localToday() {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return [d.getFullYear(), pad(d.getMonth() + 1), pad(d.getDate())].join('-');
-}
-function friendlyDate(d: string) {
-  const [year, month, day] = d.split('-').map(Number);
-  if (!year || !month || !day) return d;
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-}
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  if (init?.body) headers.set('Content-Type', 'application/json');
-  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
-  if (session?.access_token) headers.set('Authorization', 'Bearer ' + session.access_token);
-  const res = await fetch(apiBase + '/api/v1' + path, { ...init, headers });
-  if (!res.ok) {
-    const body: { error?: string } = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Request failed (' + res.status + ')');
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
-}
-
-function RecipeCard({ recipe, onOpen }: { recipe: RecipeSummary; onOpen: () => void }) {
-  const label = recipe.cookbook ? 'FROM THE COOKBOOK' : 'FROM THE RECIPE COLLECTION';
-  return (
-    <button className="recipe-card" onClick={onOpen} type="button" aria-label={'Open ' + recipe.title}>
-      <span className="recipe-card-art" aria-hidden="true"><span className="recipe-art-leaf">❧</span><span className="recipe-art-circle" /></span>
-      <span className="recipe-card-body">
-        <span className="recipe-card-tag">{label}</span>
-        <strong>{recipe.title}</strong>
-        {recipe.authors.length > 0 && <span className="recipe-card-byline">By {recipe.authors.join(', ')}</span>}
-        {recipe.cookbook && <span className="recipe-bookline">{recipe.cookbook}{recipe.page ? ' · p. ' + recipe.page : ''}</span>}
-        {recipe.cooking && recipe.cooking.count > 0 && (
-          <span className="cooking-preview">
-            <b>Cooked {recipe.cooking.count} {recipe.cooking.count === 1 ? 'time' : 'times'}</b>
-            {recipe.cooking.lastCookedOn && <span> · Last: {friendlyDate(recipe.cooking.lastCookedOn)}</span>}
-            {recipe.cooking.latestNote && <em>“{recipe.cooking.latestNote}”</em>}
-          </span>
-        )}
-        <span className="recipe-card-action">View recipe <span aria-hidden="true">→</span></span>
-      </span>
-    </button>
-  );
+function recipeSearchPath(q: string, myBooksOnly: boolean) {
+  const params = new URLSearchParams();
+  params.set('q', q);
+  if (myBooksOnly) params.set('myBooksOnly', 'true');
+  return '/recipes?' + params.toString();
 }
 
 export default function App() {
@@ -93,6 +47,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [owned, setOwned] = useState<OwnedBook[]>([]);
+  const [myBooksOnly, setMyBooksOnly] = useState(false);
   const [bookFilter, setBookFilter] = useState<'all' | 'mine'>('all');
   const [bookSearch, setBookSearch] = useState('');
   const [booksLoading, setBooksLoading] = useState(false);
@@ -120,9 +75,9 @@ export default function App() {
 
   useEffect(() => {
     if (!authReady || !session) return;
-    const intent = readIntent();
+    const intent = readAuthIntent();
     if (!intent) return;
-    sessionStorage.removeItem(AUTH_INTENT_KEY);
+    clearAuthIntent();
     setView(intent.view);
     setDetailSlug(intent.recipeSlug);
     setCookedOn(intent.cookedOn);
@@ -145,8 +100,7 @@ export default function App() {
     setAuthError('');
     setAuthSent(false);
     setPendingBookId(bookId);
-    const intent: AuthIntent = { view, recipeSlug: detailSlug, bookId, cookedOn, notes };
-    try { sessionStorage.setItem(AUTH_INTENT_KEY, JSON.stringify(intent)); } catch { /* private browsing may block storage */ }
+    writeAuthIntent({ view, recipeSlug: detailSlug, bookId, cookedOn, notes });
     setAuthOpen(true);
   }
 
@@ -154,12 +108,12 @@ export default function App() {
     let live = true;
     setRecipeLoading(true);
     setRecipeError('');
-    void api<{ items: RecipeSummary[] }>('/recipes?q=' + encodeURIComponent(query))
+    void api<{ items: RecipeSummary[] }>(recipeSearchPath(query, myBooksOnly && Boolean(session)))
       .then(x => { if (live) setRecipes(x.items); })
       .catch((e: unknown) => { if (live) { setRecipes([]); setRecipeError(e instanceof Error ? e.message : 'Search failed'); } })
       .finally(() => { if (live) setRecipeLoading(false); });
     return () => { live = false; };
-  }, [query, session?.access_token]);
+  }, [query, myBooksOnly, session?.access_token]);
 
   async function loadHistory(slug: string) {
     if (!session) { setHistory([]); return; }
@@ -237,7 +191,7 @@ export default function App() {
       });
       setNotes(''); setCookedOn(localToday()); setNotice('Added to your cooking history.');
       await loadHistory(detailSlug);
-      const x = await api<{ items: RecipeSummary[] }>('/recipes?q=' + encodeURIComponent(query));
+      const x = await api<{ items: RecipeSummary[] }>(recipeSearchPath(query, myBooksOnly && Boolean(session)));
       setRecipes(x.items);
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save'); }
     finally { setSaving(false); }
@@ -258,7 +212,7 @@ export default function App() {
       });
       setEditingId(null);
       await loadHistory(detailSlug);
-      const result = await api<{ items: RecipeSummary[] }>('/recipes?q=' + encodeURIComponent(query));
+      const result = await api<{ items: RecipeSummary[] }>(recipeSearchPath(query, myBooksOnly && Boolean(session)));
       setRecipes(result.items);
       setNotice('Cooking note updated.');
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update your note'); }
@@ -269,7 +223,7 @@ export default function App() {
     try {
       await api('/me/cooking-sessions/' + encodeURIComponent(id), { method: 'DELETE' });
       await loadHistory(detailSlug);
-      const x = await api<{ items: RecipeSummary[] }>('/recipes?q=' + encodeURIComponent(query));
+      const x = await api<{ items: RecipeSummary[] }>(recipeSearchPath(query, myBooksOnly && Boolean(session)));
       setRecipes(x.items);
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete'); }
   }
@@ -337,7 +291,10 @@ export default function App() {
             </section>}
             <section id="recipe-results" className={"results" + (!hasSearched ? " results-home" : "")}>
               <div className="section-top"><div><p className="eyebrow">DISCOVER SOMETHING DELICIOUS</p>
-                <h2>{query ? 'Recipes with “' + query + '”' : 'Explore the collection'}</h2></div>
+                <h2>{query ? 'Recipes with “' + query + '”' : 'Explore the collection'}</h2>
+                {session && <label className="my-books-filter"><input type="checkbox" checked={myBooksOnly} onChange={e => setMyBooksOnly(e.target.checked)} /> My cookbooks only</label>}
+                {!session && myBooksOnly && <p className="muted">Sign in to filter by cookbooks on your shelf.</p>}
+                </div>
                 <span className="result-count">{recipeLoading ? "Searching…" : recipes.length + " shown"}</span></div>
               {recipeLoading ? <p className="empty" role="status">Finding recipes…</p>
                 : recipeError ? <div className="empty" role="alert"><h3>Could not load recipes.</h3><p>{recipeError}</p><button type="button" onClick={() => search(query)}>Try again</button></div>

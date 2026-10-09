@@ -2,51 +2,53 @@
 
 This is the sequenced execution backlog. Check items only once committed/tested; these docs themselves do not mean implementation is done.
 
+**Legend:** `[x]` = in repo and builds; `[~]` = partial; `[ ]` = not started or blocked.
+
 ## Phase 0 — repository/data readiness (blocking)
 
 - [ ] Verify complete one-time migration from Clemport into Sousbot: 155 JSON recipe files as of 2026-10-09, audit/research/ingestion files, path+SHA reconciliation.
 - [ ] Confirm no scheduled task is still writing to Clemport; enable Sousbot-targeted jobs **only after** data validation.
-- [ ] Establish catalog source-of-truth policy and public-display rights check.
+- [~] Establish catalog source-of-truth policy and public-display rights check (documented in specs; enforcement tooling pending).
 - [ ] Inventory legacy schema variations, source quality and known duplicate variants.
-- [ ] Set initial UX skeleton/wireframe for Discover, Recipe, My Books, Log cooking.
+- [~] Set initial UX skeleton/wireframe for Discover, Recipe, My Books, Log cooking (implemented in web scaffold; design system doc is authoritative).
 - **Acceptance:** verified file inventory and checksums; importable samples; no user history needed yet.
 
 ## Phase 1 — TypeScript monorepo and backend core
 
-- [ ] Configure npm workspaces: `apps/web`, `apps/api`, `packages/shared`.
-- [ ] Set ESLint, Prettier, TypeScript strict mode, Vitest, environment examples.
-- [ ] Create Supabase project (user-controlled), env connection config and migration system (Drizzle).
-- [ ] Implement catalog tables plus private user tables; constraints, indexes, documented RLS policies.
-- [ ] Create Express health endpoint and validation/error middleware.
-- [ ] Verify Supabase Auth bearer token server-side and test private per-user query scoping.
+- [x] Configure npm workspaces: `apps/web`, `apps/api`, `packages/shared`.
+- [~] Set ESLint, Prettier, TypeScript strict mode, Vitest, environment examples (strict TS + env examples yes; lint/test runners not yet).
+- [~] Create Supabase project (user-controlled), env connection config and migration system (Drizzle schema + SQL migration file; DB not applied).
+- [x] Implement catalog tables plus private user tables; constraints, indexes, documented RLS policies (RLS in SQL migration — apply to verify).
+- [x] Create Express health endpoint and validation/error middleware.
+- [~] Verify Supabase Auth bearer token server-side and test private per-user query scoping (middleware implemented; automated multi-user tests pending).
 - **Acceptance:** fresh DB can migrate, API starts, CI tests pass, no secrets in repo.
 
 ## Phase 2 — catalog import + browsing
 
-- [ ] Build idempotent JSON importer to staging; preserve raw record and source hash.
+- [~] Build idempotent JSON importer to staging; preserve raw record and source hash (CLI + provenance table; bulk archive still pending in `recipes/`).
 - [ ] Manually publish a small verified sample. Do not bulk-publish all 155 without quality gate.
 - [ ] Populate canonical authors and books, source evidence, basic ingredient normalization/aliases.
-- [ ] Implement public `GET /recipes`, `/recipes/:slug`, `/ingredients/suggest`, `/books`, `/authors`.
-- [ ] Build mobile-first Discover search, filters and recipe detail cards; accessible loading/error/empty states.
+- [~] Implement public `GET /recipes`, `/recipes/:slug`, `/ingredients/suggest`, `/books`, `/authors` (core recipe/book routes yes; suggest/authors not yet).
+- [~] Build mobile-first Discover search, filters and recipe detail cards; accessible loading/error/empty states (discover + my-books filter; no URL routing yet).
 - **Acceptance:** search “brussels sprouts” and “miso” as independent one-term queries, select result, see legitimate source/book link, no fabricated pages.
 
 ## Phase 3 — users, My Books, dated cooking sessions
 
-- [ ] Supabase login/logout/session UI; support anonymous public browsing.
-- [ ] Add owned books and “My books only” filter.
-- [ ] Implement `POST/GET/PATCH/DELETE` cooking sessions scoped to current user.
-- [ ] Build fast cooking log dialog with browser-local date default and optional notes.
-- [ ] Show ordered historical dates + notes on recipe detail and last-cooked snippet on result cards.
+- [x] Supabase login/logout/session UI; support anonymous public browsing.
+- [x] Add owned books and “My books only” filter (API + discover checkbox).
+- [x] Implement `POST/GET/PATCH/DELETE` cooking sessions scoped to current user.
+- [x] Build fast cooking log dialog with browser-local date default and optional notes (includes edit/delete in journal).
+- [x] Show ordered historical dates + notes on recipe detail and last-cooked snippet on result cards.
 - [ ] Integration tests with two users proving private histories do not leak.
 - **Acceptance:** each cook adds a dated occasion; history persists across sessions; edits/deletions are authorized; users see their own shelf and notes only.
 
 ## Deployment milestone — Vercel (after database/local vertical slice)
 
-- [ ] Connect **two Vercel projects** to this monorepo: `apps/web` as Vite and `apps/api` as Node/Express Function (project root directories).
+- [~] Connect **two Vercel projects** to this monorepo: `apps/web` as Vite and `apps/api` as Node/Express Function (vercel.json build/install hints committed; projects not imported).
 - [ ] Validate shared npm-workspace builds in Vercel, set the API URL for browser builds, and confirm web-to-API requests in preview and production.
 - [ ] Configure Vercel encrypted environment variables: public web Supabase URL/publishable key, API Supabase URL/publishable key, protected `DATABASE_URL` from Supabase transaction pooler, `WEB_ORIGIN`. Keep migration-only DB credentials outside the client.
 - [ ] Check SSL and Postgres pool size=1 in Functions. Verify health, ingredient search, Supabase Auth redirect and private cooking-history isolation on a deployed preview.
-- [ ] Set up Vite client-side route fallback, custom domain (optional), independent production and preview configs and smoke tests.
+- [x] Set up Vite client-side route fallback (`apps/web/vercel.json` rewrites).
 - **Acceptance:** same public web app works via Vercel, a verified signed-in user can create/revisit a dated cooking note, and there are no client-visible database credentials.
 
 ## Phase 4 — hardening and unattended ingestion

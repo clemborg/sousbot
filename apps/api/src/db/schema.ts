@@ -69,6 +69,15 @@ export const userBooks = pgTable('user_books', {
   editionId: uuid('edition_id').references(() => bookEditions.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, t => [index('user_books_owner_idx').on(t.userId), uniqueIndex('user_books_one_title_per_user').on(t.userId, t.bookId)]);
+export const recipeProvenance = pgTable('recipe_provenance', {
+  recipeId: uuid('recipe_id')
+    .primaryKey()
+    .references(() => recipes.id, { onDelete: 'cascade' }),
+  originPath: text('origin_path').notNull().unique(),
+  contentSha: text('content_sha').notNull(),
+  importedAt: timestamp('imported_at', { withTimezone: true }).defaultNow().notNull(),
+}, t => [index('recipe_provenance_sha_idx').on(t.contentSha)]);
+
 export const cookingSessions = pgTable('cooking_sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').notNull().references(() => authUsers.id, { onDelete: 'cascade' }),

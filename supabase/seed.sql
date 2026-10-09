@@ -1,0 +1,3 @@
+-- Canonical dev seed: run from repo root after migrations:
+--   npm run db:seed
+-- (imports recipes/fixtures/*.json via automation/ingestion/import-recipes.ts)

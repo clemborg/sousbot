@@ -19,9 +19,31 @@ Edit both copies:
 
 ## 2. Apply schema
 
-Open Supabase Dashboard → **SQL Editor** and execute `supabase/migrations/0001_foundation.sql` exactly once. This is intentionally a reviewed manual migration, not a background task. It creates catalog, cookbook and per-user cooking-history tables, indexes, constraints and RLS policies.
+Open Supabase Dashboard → **SQL Editor** and execute, in order:
 
-IMPORTANT: The SQL is **not applied** by the act of committing it to GitHub. Run it on the intended, empty Sousbot project. Future schema changes should be migrations, not edits applied directly to this baseline.
+1. `supabase/migrations/0001_foundation.sql`
+2. `supabase/migrations/0002_recipe_provenance.sql`
+
+Each file is a reviewed manual migration, not a background task. Together they create catalog tables, personal history, RLS policies, and import provenance tracking.
+
+IMPORTANT: The SQL is **not applied** by the act of committing it to GitHub. Run it on the intended Sousbot project. Use a **direct/session** connection string from Supabase Connect for migrations and for local `DATABASE_URL` during development seeding.
+
+## 2b. Seed dev catalog (optional)
+
+After `apps/api/.env` has a working `DATABASE_URL`:
+
+```bash
+npm run db:seed
+```
+
+This imports and **publishes** the three fixture recipes under `recipes/fixtures/` via [automation/ingestion/import-recipes.ts](../automation/ingestion/import-recipes.ts). Re-running is safe (SHA-based skip).
+
+Other commands:
+
+```bash
+npm run import:recipes -- --dir recipes/fixtures    # dry-run validate
+npm run import:recipes:publish -- --dir recipes     # bulk publish (use with care)
+```
 
 ## 3. Set up Supabase Auth redirects
 
@@ -42,9 +64,9 @@ Run `npm run build` and `npm run typecheck` before deployment.
 
 Verify API health: `http://localhost:4000/api/v1/health` should return `{"status":"ok","database":"connected"}` only after the API environment and database migration are correct.
 
-## 5. Empty database is expected initially
+## 5. Empty database until you seed or import
 
-No recipe JSON files have been migrated to Sousbot or imported into Supabase as of the initial scaffold. The Discover screen will display an empty-state message until a tested importer publishes records. There is **no automatic publication** of unaudited recipes.
+Until you run `npm run db:seed` or `npm run import:recipes:publish`, Discover shows an empty catalog. There is **no automatic publication** of unaudited recipes; `--publish` requires an explicit CLI flag and passes a minimal source+ingredient gate.
 
 ## Operational/security notes
 
@@ -55,6 +77,6 @@ No recipe JSON files have been migrated to Sousbot or imported into Supabase as 
 
 ## Future hosting target: Vercel
 
-Sousbot is intended for **Vercel**, with `apps/web` and `apps/api` as separate Vercel projects linked to the same GitHub monorepo. This is a future deployment target; nothing is deployed yet. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
+Sousbot is intended for **Vercel**, with `apps/web` and `apps/api` as separate Vercel projects linked to the same GitHub monorepo. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md) and the step-by-step [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md).
 
 For the Express API **on Vercel**, obtain the **Supabase transaction-pooler (port 6543)** connection string, not the direct host or the session pooler. Use TLS (`sslmode=require` in the connection string), a small client pool (1 per function instance), and no named prepared statements. Use a direct/session-capable connection for database migrations. Keep all connection strings out of the web bundle.

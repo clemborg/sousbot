@@ -1,16 +1,18 @@
 # Recipe ingestion, audit, migration and publication
 
-## Current state and immediate blocker
+## Current state
 
-At scoping time, Sousbot contains only README/research status files. **155 legacy JSON recipe files and the audit history exist in Clemport and have not been verified in Sousbot.** The two former ChatGPT scheduled jobs are paused and retargeted to Sousbot; do not resume them before verified migration and quality controls.
+**Catalog input:** JSON files under `recipes/` in the Sousbot repository. Dev fixtures (`recipes/fixtures/`) ship with the repo; bulk historical JSON must be added to Git before import.
 
-### Safe transfer checklist
+**Importer:** [automation/ingestion/import-recipes.ts](../automation/ingestion/import-recipes.ts) — dry-run by default, `--apply`, `--publish` with conservative gate (source URL + ingredients). Provenance stored in `recipe_provenance` (`origin_path`, `content_sha`).
 
-1. Inventory legacy `Clemport/recipe-knowledge-base/`: count JSON recipes, audit review JSONs and run reports, ingestion runs, research notes. Record per-file path + SHA/checksum.
-2. Transfer into Sousbot at planned root paths: `recipes/`, `audit/`, `ingestion/`, `research/`; preserve file bytes, review SHAs, audit history and source links.
-3. Compare **filenames and content checksums** between source and destination. Do not conflate 155 records with 155 unique dishes.
-4. Resolve any path conflicts (Sousbot already has `research/migration-status.md`); retain both sets of notes.
-5. Only then enable ingestion/audit tasks, after updating README and confirming paths. Do not delete Clemport until explicitly approved; retain as backup for now.
+### Archive checklist (before bulk publish)
+
+1. Inventory all JSON under `recipes/`; record path + SHA/checksum in [research/migration-status.md](../research/migration-status.md).
+2. Keep audit ledgers under `audit/` and import run logs under `ingestion/runs/` (local logs are gitignored).
+3. Compare counts vs unique dishes; do not conflate file count with distinct recipes.
+4. Run `npm run import:recipes` (dry-run) then `npm run import:recipes:apply` for drafts; use `--publish` only after review.
+5. Resume scheduled audit/ingestion automation only after publication policy is satisfied.
 
 ## Dataflow
 
@@ -21,7 +23,7 @@ Authorized sources / publisher indexes / published chef recipes
      → ingredient lines + method + provenance + explicit unknowns
      → duplicate/author/book-page checks
      → Git archive + persistent audit log
-     → idempotent import into Postgres staging
+     → idempotent import into Postgres (draft or published status)
      → publication eligibility checks
      → shared published recipe catalog
      → app via API

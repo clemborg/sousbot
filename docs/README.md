@@ -1,6 +1,6 @@
 # Sousbot — product and engineering specification
 
-**Status:** Application scaffold committed; Vercel pilot scoped; not yet deployed.  
+**Status:** Application scaffold + JSON importer/seed scripts committed; Vercel build hints in repo; not deployed until owner runs checklist. Apply Supabase migrations locally before seed.  
 **Last updated:** 2026-10-09.
 
 Sousbot is an ingredient-first recipe discovery web app. It maintains a shared recipe catalog, connects recipes to cookbooks when supported by evidence, and lets each user privately record **dated cooking occasions and notes**. A cookbook is an optional filter, not a requirement to use the product.
@@ -16,7 +16,8 @@ Sousbot is an ingredient-first recipe discovery web app. It maintains a shared r
 7. [Implementation roadmap](ROADMAP.md) — sequenced deliverables with explicit definition of done.
 8. [First Vercel pilot scope](VERCEL_RELEASE_SCOPE.md) — launch criteria, two-project setup, env matrix, GitHub issues and blockers.
 9. [Vercel deployment runbook](VERCEL_DEPLOYMENT.md) — hosting details and deployment risks.
-10. [Approved design system](DESIGN_SYSTEM.md) — warm illustrated UI direction, tokens, screen contracts and implementation milestones.
+10. [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md) — owner dashboard steps for two projects.
+11. [Approved design system](DESIGN_SYSTEM.md) — warm illustrated UI direction, tokens, screen contracts and implementation milestones.
 
 ## Principles
 
@@ -29,4 +30,4 @@ Sousbot is an ingredient-first recipe discovery web app. It maintains a shared r
 
 ## Current repository status
 
-A React/Vite web scaffold, Express API, shared TypeScript package, initial SQL migration, and GitHub Actions build verification have been committed. **This is not a deployed app**, and the Supabase schema has **not been applied**. The legacy collection of **155 JSON files remains in Clemport** pending a verified copy. The ingestion/audit tasks remain paused until migration is verified. Never seed, count, or publish presumed migrated records.
+A React/Vite web scaffold, Express API, shared packages, SQL migrations, JSON importer (`automation/ingestion/`), dev fixtures (`recipes/fixtures/`), and GitHub Actions build verification are in repo. **This is not a deployed app** until Vercel projects are created. The **catalog source of truth is `recipes/` in this repository**; run migrations then `npm run db:seed` for a three-recipe dev catalog. Bulk historical JSON must be added under `recipes/` before import — not read from external repos at runtime.

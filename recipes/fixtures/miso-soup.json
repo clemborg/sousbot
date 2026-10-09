@@ -1,0 +1,21 @@
+{
+  "title": "Simple Miso Soup",
+  "author": "Sousbot fixture",
+  "servings": "4",
+  "source_url": "https://www.justonecookbook.com/miso-soup/",
+  "ingredients": [
+    "4 cups dashi or water",
+    "3 tbsp miso paste",
+    "4 oz soft tofu, cubed",
+    "2 green onions, thinly sliced",
+    "1 sheet nori, cut into strips (optional)"
+  ],
+  "directions": [
+    "Warm dashi in a pot without boiling.",
+    "Dissolve miso in a ladle of warm broth, then stir back into the pot.",
+    "Add tofu and heat gently for 2 minutes.",
+    "Serve topped with green onion and nori."
+  ],
+  "directions_display_authorized": false,
+  "_meta": { "publish": true }
+}

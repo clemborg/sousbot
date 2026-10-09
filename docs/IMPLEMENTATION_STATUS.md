@@ -2,33 +2,45 @@
 
 ## Committed scaffold (not deployed)
 
-- npm workspaces with React 19 + Vite + TypeScript web and Node/Express + TypeScript API.
-- Shared Zod contracts and runtime input validation.
-- Supabase URL wired in non-secret environment examples; publishable key must be populated locally; Postgres connection string must be supplied in a secure environment.
-- Supabase Auth email magic link frontend and server JWT verification.
-- PostgreSQL/Drizzle schema for recipe catalog, authors, books, optional book edition/page, user shelves and dated cooking sessions.
-- Proposed initial SQL migration in `supabase/migrations/0001_foundation.sql`; **not executed against Supabase**.
-- Initial search, recipe detail, recipe cooking-session write/read/update/delete API and minimal frontend flows.
-- API only renders recipe method if `directions_display_policy = authorized`.
+- npm workspaces: `apps/web`, `apps/api`, `packages/shared`.
+- React 19 + Vite + TypeScript web; Node/Express + TypeScript API split into routes/middleware/services.
+- Shared Zod contracts (`searchSchema` includes `myBooksOnly`); runtime validation on API inputs.
+- Supabase URL in env examples; publishable key and `DATABASE_URL` must be supplied locally or on Vercel.
+- Supabase Auth magic-link UI, session handling, auth-intent preservation across sign-in.
+- PostgreSQL/Drizzle schema + migrations `0001_foundation.sql` and `0002_recipe_provenance.sql` (**not executed** against Supabase until you apply them).
+- JSON importer: `automation/ingestion/import-recipes.ts`; npm scripts `import:recipes*`, `db:seed`; fixtures in `recipes/fixtures/`.
+- Public catalog + personal endpoints: search (with optional my-books filter), recipe detail, books shelf, cooking-session CRUD.
+- Warm illustrated UI in `apps/web` (single-page shell; design tokens in CSS).
+- Data dirs: `recipes/fixtures/` (seed data), `audit/`, `ingestion/runs/` (gitignored JSON logs), `automation/ingestion/`.
+- Vercel monorepo `installCommand` / `buildCommand` on both `apps/web` and `apps/api`.
 
 ## CI verification
 
-GitHub Actions workflow `.github/workflows/verify.yml` successfully completed dependency installation, TypeScript typechecking, and production builds on 2026-10-09. This does **not** validate database connectivity, migration execution, sign-in configuration, or two-user row authorization.
+GitHub Actions `.github/workflows/verify.yml` runs `npm run typecheck` and `npm run build` on push/PR to `main`. This does **not** validate database connectivity, migration execution, sign-in email delivery, or two-user isolation.
 
 ## Still outstanding (do not claim complete)
 
-- Executing migration against user's Supabase Postgres instance.
-- Providing database URL privately in API hosting/local environment; public publishable key env config.
-- Running the application end-to-end with a configured Supabase database and separate user accounts; automated integration tests are not yet present.
-- Migrating Clemport's 155 recipe JSON files into Sousbot and implementing the importer.
-- Publication/rights policy enforcement, source audit and ingredient normalization coverage.
-- Search ranking, cookbook filters/owned-books-only search, pagination, production hardening and deployment.
-- Formal automated integration tests and deployment configuration; CI for typechecking/build is now configured and green.
+- Executing migration against the Supabase Postgres instance.
+- Private `DATABASE_URL` (transaction pooler) and web/API env on Vercel.
+- End-to-end run with populated catalog; no integration or smoke tests in CI yet.
+- Bulk historical JSON added under `recipes/` + reviewed publish via importer (#4).
+- `/ingredients/suggest`, `/authors`, pagination cursors, richer search ranking.
+- ESLint/Prettier/Vitest toolchain (roadmap Phase 1 — not added yet).
+- Vercel project import ([checklist](VERCEL_IMPORT_CHECKLIST.md)), preview smoke tests, production pilot (#1–#5).
 
 ## First acceptance run
 
-Once DB access exists: `npm install`, `npm run typecheck`, `npm run build`; run `0001_foundation.sql`; `npm run dev`; confirm health endpoint, anonymous browse, email sign-in and two independent users' cooking histories. The catalog starts empty until explicitly populated.
+Once DB access exists: `npm install`, env files, apply `0001` + `0002`, `npm run db:seed`, `npm run dev`, then verify health, search “miso”, sign-in, cooking journal, two users' isolated data.
 
-## Deployment target decided
+## Where to look in code
 
-Vercel will host React/Vite and Express as two related projects from the same repository; Supabase remains the database and identity provider. The Express scaffold now supports an exported app and reduced connection pool in Vercel. See `docs/VERCEL_DEPLOYMENT.md`. The project has **not** been imported into or deployed on Vercel; no live database connection is claimed.
+| Area | Location |
+|------|----------|
+| API entry | `apps/api/src/index.ts`, `apps/api/src/app.ts` |
+| Routes | `apps/api/src/routes/` |
+| Schema | `apps/api/src/db/schema.ts` |
+| Web shell | `apps/web/src/App.tsx` |
+| Shared DTOs | `packages/shared/src/index.ts` |
+| Importer | `automation/ingestion/import-recipes.ts` |
+| Spec index | `docs/README.md` |
+| Release scope | `docs/VERCEL_RELEASE_SCOPE.md` |

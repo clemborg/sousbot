@@ -1,0 +1,16 @@
+{
+  "slug": "garlic-butter-pasta",
+  "title": "Garlic Butter Pasta",
+  "author": "Sousbot fixture",
+  "servings": "2",
+  "source_url": "https://www.bbcgoodfood.com/recipes/garlic-pasta",
+  "ingredients": "200 g spaghetti\n4 cloves garlic, thinly sliced\n3 tbsp unsalted butter\n2 tbsp olive oil\nSalt and black pepper\nParsley, chopped",
+  "directions_display_authorized": true,
+  "directions": [
+    "Cook pasta in well-salted water until al dente; reserve 1/2 cup pasta water.",
+    "Gently cook garlic in butter and oil until fragrant, not brown.",
+    "Toss pasta with garlic butter, adding pasta water to loosen.",
+    "Season and finish with parsley."
+  ],
+  "_meta": { "publish": true }
+}
