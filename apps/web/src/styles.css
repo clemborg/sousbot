@@ -101,3 +101,51 @@ footer span { font-weight: 400; letter-spacing: 0; }
   .detail { padding: 0 20px; margin-top: 30px; } .detail h1 { font-size: 42px; } .detail-columns { grid-template-columns: 1fr; margin-top: 35px; }
   .history-panel { padding: 23px; } .book-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .cover-placeholder { min-height: 170px; }
 }
+
+/* Sousbot illustrated design direction — first implementation pass */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+:root{--color-bg:#FAF7EF;--color-surface:#FFFFFF;--color-sage:#2F5233;--color-sage-light:#E5EEDC;--color-ink:#1B1B1B;--color-muted:#6B6B6B;--color-gold:#C6A96B;--color-gold-light:#F3E6CB;--color-error:#C35B5B;--font-display:'Fraunces',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;background:var(--color-bg);color:var(--color-ink);font-family:var(--font-body)}
+body{background:var(--color-bg)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #a8854d;outline-offset:3px}
+.topbar{background:var(--color-bg);height:86px;border-color:#e8e3d9;gap:65px}
+.brand{font:500 29px var(--font-display);letter-spacing:-.045em}
+.brand-dot{color:var(--color-sage)}
+nav{gap:35px}
+nav button{height:86px;font-size:13px;font-weight:500}
+nav button.active{border-bottom:0;font-weight:700}
+.account{background:var(--color-sage);border-color:var(--color-sage);color:white;font-size:12px}
+.hero{background:radial-gradient(ellipse at 70% 40%,#fffdf8,var(--color-bg) 75%);padding:0;text-align:left;overflow:hidden;border-bottom:0}
+.hero-inner{max-width:1440px;min-height:615px;margin:0 auto;padding:36px 5vw 25px;display:grid;grid-template-columns:52% 48%;align-items:center}
+.hero-copy{position:relative;z-index:1;padding:30px 0}
+.eyebrow{font-size:10px;letter-spacing:.18em;color:#7b8a6f}
+.hero h1{font:400 clamp(65px,7vw,104px)/.99 var(--font-display);letter-spacing:-.06em;margin:26px 0 23px}
+.hero-subtitle{font-size:clamp(15px,1.5vw,18px);line-height:1.65;color:#4d514b;max-width:440px;margin:0 0 30px}
+.search-box{margin:0;max-width:565px;border-radius:36px;box-shadow:0 8px 27px #453c2610;padding:7px 8px 7px 20px;gap:10px}
+.search-glyph{font-size:25px;color:#404b42}
+.search-box input{font-size:13px;padding:13px 0}
+.search-box button{border-radius:25px;background:var(--color-sage);padding:13px 19px;font-size:12px}
+.quick-search{justify-content:start;align-items:start;flex-direction:column;gap:12px;margin-top:22px}
+.quick-search>span{font-size:12px;color:#696d62}
+.ingredient-chips{display:flex;flex-wrap:wrap;gap:9px}
+.quick-search button{background:#f0ece3;border-color:#ebe7df;padding:9px 14px;font-size:11px;color:#3b4239}
+.quick-search button:hover{background:var(--color-sage-light)}
+.hero-art{height:100%;position:relative;display:flex;align-items:center;justify-content:center}
+.hero-art:before{content:'';position:absolute;inset:18% 8%;background:#d6d4b7;opacity:.23;filter:blur(35px);border-radius:50%}
+.hero-art img{position:relative;width:115%;max-width:700px;max-height:565px;object-fit:contain;filter:drop-shadow(0 14px 11px #405c2b13)}
+.features{max-width:1280px;margin:0 auto;padding:25px 5vw 45px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:25px;border-top:1px solid #e8e4d9}
+.feature{text-align:center;padding:8px 10px}
+.feature>span{display:block;font:400 37px Georgia,serif;line-height:1.2;color:#252e25;margin-bottom:11px}
+.feature h3{font-size:13px;font-weight:600;margin:0 0 9px}
+.feature p{font-size:12px;color:#75796f;line-height:1.6;margin:0}
+.results-home{border-top:1px solid #e9e4d9}
+.section-top h2,.recipe-card strong,.detail h1,.recipe-body h2,.history-panel h2,.books-page h1,.modal h2{font-family:var(--font-display)}
+.recipe-card{border-color:#e7e2d7;border-radius:13px}
+.recipe-card-tag{color:#72826d}
+.recipe-card-action,.back-link,.sources a{color:var(--color-sage)}
+.history-panel{background:#e9eee2}
+.primary{background:var(--color-sage)}
+.cover-placeholder{font-family:var(--font-display)}
+@media(max-width:950px){.hero-inner{grid-template-columns:56% 44%;min-height:510px}.hero h1{font-size:clamp(57px,7vw,85px)}.hero-art img{width:140%}}
+@media(max-width:650px){.topbar{height:66px;gap:16px;padding:0 17px}.brand{font-size:23px}nav{gap:12px}nav button{height:66px;font-size:11px}.account{font-size:11px;padding:8px 10px}.hero-inner{display:flex;flex-direction:column;align-items:stretch;padding:40px 21px 0;min-height:0}.hero-copy{padding:0}.hero h1{font-size:clamp(59px,14vw,78px);margin:19px 0}.hero-subtitle{font-size:15px;max-width:370px;margin-bottom:24px}.search-box{padding:5px 6px 5px 14px;gap:7px}.search-box button{padding:12px 13px;font-size:11px}.search-box input{font-size:12px}.quick-search{margin-top:20px}.hero-art{height:265px;overflow:hidden}.hero-art img{height:350px;width:auto;max-width:none;transform:translateY(27px)}.features{grid-template-columns:repeat(2,1fr);gap:10px;padding:22px 15px 35px}.feature{padding:8px 5px}.feature h3{font-size:12px}.feature p{font-size:11px}.section-top h2{font-size:30px}}
+@media(max-width:375px){.topbar{gap:10px}.brand{font-size:21px}nav{gap:8px}.account{padding:8px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.recipe-card{transition:none}}
