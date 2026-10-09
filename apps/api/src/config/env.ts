@@ -12,7 +12,16 @@ function defaultWebOrigin(): string {
   return 'http://localhost:5173';
 }
 
-export function loadApiEnv() {
+export type ApiEnv = {
+  databaseUrl: string;
+  supabaseUrl: string;
+  supabasePublishableKey: string;
+  webOrigin: string;
+  isVercel: boolean;
+  port: number;
+};
+
+export function loadApiEnv(): ApiEnv {
   return {
     databaseUrl: required('DATABASE_URL'),
     supabaseUrl: required('SUPABASE_URL'),
@@ -21,4 +30,12 @@ export function loadApiEnv() {
     isVercel: Boolean(process.env.VERCEL),
     port: Number(process.env.PORT ?? 4000),
   };
+}
+
+let cachedEnv: ApiEnv | undefined;
+
+/** Loads and caches env; throws if required variables are missing. */
+export function getApiEnv(): ApiEnv {
+  if (!cachedEnv) cachedEnv = loadApiEnv();
+  return cachedEnv;
 }

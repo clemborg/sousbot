@@ -20,4 +20,11 @@ for (const entry of readdirSync(publicDir, { withFileTypes: true })) {
 }
 
 cpSync(distDir, publicDir, { recursive: true });
+
+const indexPath = join(publicDir, 'index.html');
+if (!existsSync(indexPath)) {
+  console.error('sync-web-to-api-public: index.html missing after copy');
+  process.exit(1);
+}
+
 console.log('sync-web-to-api-public: copied apps/web/dist → apps/api/public');

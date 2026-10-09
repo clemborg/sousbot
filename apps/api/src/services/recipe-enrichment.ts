@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { RecipeSummary } from '@sousbot/shared';
-import { db } from '../db/client';
+import { getDb } from '../db/client';
 import {
   authors,
   books,
@@ -18,12 +18,12 @@ export async function enrichRecipeSummaries(
   if (!rows.length) return [];
   const ids = rows.map(r => r.id);
   const [authorRows, bookRows, cookRows] = await Promise.all([
-    db
+    getDb()
       .select({ recipeId: recipeAuthors.recipeId, name: authors.name })
       .from(recipeAuthors)
       .innerJoin(authors, eq(recipeAuthors.authorId, authors.id))
       .where(inArray(recipeAuthors.recipeId, ids)),
-    db
+    getDb()
       .select({
         recipeId: recipeBookRefs.recipeId,
         title: books.title,
@@ -34,7 +34,7 @@ export async function enrichRecipeSummaries(
       .innerJoin(books, eq(recipeBookRefs.bookId, books.id))
       .where(and(inArray(recipeBookRefs.recipeId, ids), eq(recipeBookRefs.bookVerified, true))),
     userId
-      ? db
+      ? getDb()
           .select({
             recipeId: cookingSessions.recipeId,
             cookedOn: cookingSessions.cookedOn,

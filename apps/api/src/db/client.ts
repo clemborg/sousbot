@@ -1,12 +1,31 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { loadApiEnv } from '../config/env';
+import { getApiEnv } from '../config/env';
 
-const env = loadApiEnv();
+let pool: Pool | undefined;
+let db: NodePgDatabase | undefined;
 
-export const pool = new Pool({
-  connectionString: env.databaseUrl,
-  max: env.isVercel ? 1 : 10,
-});
+function ensurePool(): Pool {
+  if (!pool) {
+    const env = getApiEnv();
+    pool = new Pool({
+      connectionString: env.databaseUrl,
+      max: env.isVercel ? 1 : 10,
+    });
+  }
+  return pool;
+}
 
-export const db = drizzle({ client: pool });
+export function getDb(): NodePgDatabase {
+  if (!db) db = drizzle({ client: ensurePool() });
+  return db;
+}
+
+export async function closePool(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = undefined;
+    db = undefined;
+  }
+}

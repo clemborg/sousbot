@@ -18,7 +18,7 @@ Use this after local Supabase migrations and a successful `npm run db:seed` (or 
 - [ ] **Root Directory:** `apps/api`.
 - [ ] Confirm install/build match [apps/api/vercel.json](../apps/api/vercel.json) (monorepo root install, shared + web + api build, sync to `public/`).
 - [ ] Node **22+**.
-- [ ] **Environment variables** (Preview + Production as appropriate):
+- [ ] **Environment variables** (Preview + Production — missing API vars cause `FUNCTION_INVOCATION_FAILED` or `/api` 503):
   - [ ] `VITE_SUPABASE_URL`
   - [ ] `VITE_SUPABASE_PUBLISHABLE_KEY`
   - [ ] `VITE_API_BASE_URL` — **leave unset or empty** (same-origin `/api/v1`)

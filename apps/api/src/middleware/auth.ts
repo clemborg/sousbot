@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 
 declare global {
   namespace Express {
@@ -17,7 +17,7 @@ export async function optionalAuth(req: Request, res: Response, next: NextFuncti
     return;
   }
   try {
-    const { data, error } = await supabase.auth.getUser(h.slice(7));
+    const { data, error } = await getSupabase().auth.getUser(h.slice(7));
     if (error || !data.user) {
       res.status(401).json({ error: 'Invalid or expired session' });
       return;

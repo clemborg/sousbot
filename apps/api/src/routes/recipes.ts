@@ -6,7 +6,7 @@ import {
   cookingSessionPatchSchema,
   searchSchema,
 } from '@sousbot/shared';
-import { db } from '../db/client';
+import { getDb } from '../db/client';
 import {
   books,
   cookingSessions,
@@ -63,7 +63,7 @@ recipesRouter.get('/recipes', optionalAuth, async (req, res) => {
     );
   }
 
-  const rows = await db
+  const rows = await getDb()
     .select({ id: recipes.id, slug: recipes.slug, title: recipes.title, servings: recipes.servings })
     .from(recipes)
     .where(where)
@@ -74,7 +74,7 @@ recipesRouter.get('/recipes', optionalAuth, async (req, res) => {
 });
 
 recipesRouter.get('/recipes/:slug', optionalAuth, async (req, res) => {
-  const [r] = await db
+  const [r] = await getDb()
     .select({
       id: recipes.id,
       slug: recipes.slug,
@@ -95,13 +95,13 @@ recipesRouter.get('/recipes/:slug', optionalAuth, async (req, res) => {
     req.userId,
   );
   const [lines, sources, refs] = await Promise.all([
-    db
+    getDb()
       .select({ raw: recipeIngredients.rawText })
       .from(recipeIngredients)
       .where(eq(recipeIngredients.recipeId, r.id))
       .orderBy(asc(recipeIngredients.ordinal)),
-    db.select({ url: recipeSources.url }).from(recipeSources).where(eq(recipeSources.recipeId, r.id)),
-    db
+    getDb().select({ url: recipeSources.url }).from(recipeSources).where(eq(recipeSources.recipeId, r.id)),
+    getDb()
       .select({ title: books.title, page: recipeBookRefs.page, pageVerified: recipeBookRefs.pageVerified })
       .from(recipeBookRefs)
       .innerJoin(books, eq(books.id, recipeBookRefs.bookId))
@@ -121,7 +121,7 @@ recipesRouter.get('/recipes/:slug', optionalAuth, async (req, res) => {
 });
 
 recipesRouter.get('/recipes/:slug/cooking-sessions', ...authRequired, async (req, res) => {
-  const [r] = await db
+  const [r] = await getDb()
     .select({ id: recipes.id })
     .from(recipes)
     .where(and(eq(recipes.slug, String(req.params.slug)), eq(recipes.status, 'published')))
@@ -130,7 +130,7 @@ recipesRouter.get('/recipes/:slug/cooking-sessions', ...authRequired, async (req
     res.status(404).json({ error: 'Recipe not found' });
     return;
   }
-  const rows = await db
+  const rows = await getDb()
     .select({
       id: cookingSessions.id,
       cookedOn: cookingSessions.cookedOn,
@@ -150,7 +150,7 @@ recipesRouter.post('/recipes/:slug/cooking-sessions', ...authRequired, async (re
     res.status(422).json({ error: 'Invalid cooking log', details: parsed.error.flatten() });
     return;
   }
-  const [r] = await db
+  const [r] = await getDb()
     .select({ id: recipes.id })
     .from(recipes)
     .where(and(eq(recipes.slug, String(req.params.slug)), eq(recipes.status, 'published')))
@@ -159,7 +159,7 @@ recipesRouter.post('/recipes/:slug/cooking-sessions', ...authRequired, async (re
     res.status(404).json({ error: 'Recipe not found' });
     return;
   }
-  const [saved] = await db
+  const [saved] = await getDb()
     .insert(cookingSessions)
     .values({
       userId: req.userId!,
@@ -178,7 +178,7 @@ recipesRouter.patch('/me/cooking-sessions/:id', ...authRequired, async (req, res
     res.status(422).json({ error: 'Invalid update' });
     return;
   }
-  const [updated] = await db
+  const [updated] = await getDb()
     .update(cookingSessions)
     .set({ ...input.data, updatedAt: new Date() })
     .where(and(eq(cookingSessions.id, id.data), eq(cookingSessions.userId, req.userId!)))
@@ -196,7 +196,7 @@ recipesRouter.delete('/me/cooking-sessions/:id', ...authRequired, async (req, re
     res.status(422).json({ error: 'Invalid ID' });
     return;
   }
-  const [deleted] = await db
+  const [deleted] = await getDb()
     .delete(cookingSessions)
     .where(and(eq(cookingSessions.id, id.data), eq(cookingSessions.userId, req.userId!)))
     .returning({ id: cookingSessions.id });
