@@ -1,24 +1,27 @@
 # Sousbot
 
-A curated recipe collection with source references, cookbook attribution, incremental quality audits, and execution logs. Migrated from the recipe-knowledge-base directory in `clemborg/Clemport` on 2026-10-09.
+A dedicated repository for the recipe knowledge base formerly housed in `clemborg/Clemport/recipe-knowledge-base/`.
 
-## Structure
+## Migration status
 
-- `recipes/`: one recipe JSON document per recipe.
-- `audit/README.md`: required audit protocol and persistent verification criteria.
-- `audit/reviews/`: per-recipe review records with the checked recipe's blob SHA.
-- `audit/runs/`: quality-audit run logs.
-- `ingestion/runs/`: recipe-discovery run logs.
-- `research/`: research records and provenance.
+**Migration is not yet complete.** The destination has been initialized, but the recipe files, audit ledger, research and historical logs have **not yet** been copied from Clemport. The original files remain intact in the private Clemport repository.
 
-## Data quality
+GitHub's connected write tool has blocked copying existing content from the private source repository into this public destination, even after the owner approved public visibility. The owner can complete the one-time copy using Git on their computer. Until then, scheduled recipe-writing and audit tasks have been paused to avoid producing inconsistent records.
 
-A recipe's presence here is **not** proof that its cookbook/page metadata has been verified. Respect the `cookbook_verified` and `page_verified` fields and the independent audit records. Some records may reference the authors' other cookbooks or online-only recipes. Existing duplicate variants are preserved pending verification.
+## Planned repository structure
 
-## Operations
+- `recipes/`: individual recipe JSON records.
+- `audit/reviews/`: per-recipe quality assurance ledger.
+- `audit/runs/`: audit execution logs.
+- `ingestion/runs/`: ingestion execution logs.
+- `research/`: historical research notes and provenance.
 
-The existing ChatGPT scheduled expansion and audit tasks are configured separately and should target **this repository**. Future GitHub Actions automation can live in `.github/workflows/`. Store API keys only in GitHub Secrets, never in this public repository.
+The current Clemport collection had **155 JSON recipe files** at the time of initialization. No records should be considered migrated without actually verifying the files in Sousbot.
 
-## Migration
+## Data quality policy
 
-Recipe files and audit state are preserved from Clemport. The historical text of the source project's original README is at `research/Clemport-legacy-README.md`. Historical run reports may refer to old Clemport paths; they are retained unchanged for provenance.
+Author attribution and cookbook membership are different kinds of claims; cookbook and page numbers must only be flagged verified with authoritative evidence. Some source records are incomplete or may be duplicates.
+
+## Planned automation
+
+Following migration and verification, the ChatGPT scheduled ingestion and audit tasks can be retargeted here. A longer-term option is GitHub Actions running unattended via GitHub Secrets and the OpenAI API.
