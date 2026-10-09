@@ -243,3 +243,20 @@ nav button.active{border-bottom:0;font-weight:700}
 .shelf-empty{margin-top:25px}
 @media(max-width:950px){.book-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cover-placeholder{min-height:235px}}
 @media(max-width:650px){.books-intro{gap:10px}.books-intro-art{width:90px;height:100px}.books-intro-art span:first-child{font-size:78px}.books-intro-art span:last-child{font-size:20px}.books-intro h1{font-size:44px}.books-intro .muted{font-size:13px}.shelf-signin{align-items:flex-start;flex-direction:column;gap:9px}.shelf-toolbar{align-items:stretch;flex-direction:column;gap:18px}.shelf-tabs{justify-content:space-between}.shelf-search{min-width:0;width:100%}.book-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.book-card{padding:10px}.cover-placeholder{min-height:185px;padding:16px 11px 12px}.cover-ornament{font-size:35px}.cover-title{font-size:19px}.cover-imprint{font-size:7px}.book-card h3{font-size:14px}}
+
+/* Low-friction public browsing and passwordless sign-in */
+.auth-modal{background:var(--color-bg);border:1px solid #e8e3d6;box-shadow:0 20px 75px #101b1240}
+.auth-modal h2{font:400 38px/1.15 var(--font-display);letter-spacing:-.035em;margin:14px 0}
+.auth-modal .muted{line-height:1.75;font-size:14px}
+.auth-modal .muted strong{color:var(--color-sage);overflow-wrap:anywhere}
+.auth-modal form label{font-size:12px;color:#3e493b}
+.auth-modal form input{border-radius:9px;padding:13px;background:white}
+.auth-modal .primary{margin-top:12px}
+.auth-modal .secondary{width:100%;margin:12px 0}
+.auth-resend{border:0;background:none;color:var(--color-sage);font-size:12px;font-weight:700;display:block;margin:12px auto;padding:9px}
+.auth-resend:disabled{opacity:.55}
+.auth-inline-error{color:#a14337;background:#f7e5de;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;margin-top:18px}
+.intent-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:15px;width:min(600px,calc(100% - 28px));padding:16px;background:#e9eee1;border:1px solid #ccd9c5;border-radius:12px;box-shadow:0 12px 35px #243b2325;font-size:13px;color:#3b543a}
+.intent-banner button{background:var(--color-sage);border:0;border-radius:7px;padding:10px 13px;color:white;white-space:nowrap;font-size:12px}
+.intent-banner button:last-child{background:none;color:#3b543a;font-size:20px;padding:3px}
+@media(max-width:650px){.auth-modal h2{font-size:33px}.intent-banner{flex-wrap:wrap;gap:10px}.intent-banner>span{flex-basis:100%}}
