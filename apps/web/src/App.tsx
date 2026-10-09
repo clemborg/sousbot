@@ -75,6 +75,10 @@ export default function App() {
   const [history, setHistory] = useState<CookingSession[]>([]);
   const [cookedOn, setCookedOn] = useState(localToday());
   const [notes, setNotes] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useState('');
+  const [editingNotes, setEditingNotes] = useState('');
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -103,13 +107,18 @@ export default function App() {
 
   async function loadHistory(slug: string) {
     if (!session) { setHistory([]); return; }
+    setHistoryLoading(true);
     try {
       const result = await api<{ items: CookingSession[] }>('/recipes/' + encodeURIComponent(slug) + '/cooking-sessions');
       setHistory(result.items);
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not load cooking history'); }
+    finally { setHistoryLoading(false); }
   }
   useEffect(() => {
     if (!detailSlug) { setDetail(null); return; }
+    setDetail(null);
+    setHistory([]);
+    setEditingId(null);
     let live = true;
     setError('');
     void api<RecipeDetail>('/recipes/' + encodeURIComponent(detailSlug))
@@ -159,6 +168,28 @@ export default function App() {
       const x = await api<{ items: RecipeSummary[] }>('/recipes?q=' + encodeURIComponent(query));
       setRecipes(x.items);
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save'); }
+    finally { setSaving(false); }
+  }
+  function beginEdit(entry: CookingSession) {
+    setEditingId(entry.id);
+    setEditingDate(entry.cookedOn);
+    setEditingNotes(entry.notes ?? '');
+  }
+  async function saveEdit(e: FormEvent) {
+    e.preventDefault();
+    if (!editingId || !detailSlug || !session) return;
+    setSaving(true);
+    setError('');
+    try {
+      await api('/me/cooking-sessions/' + encodeURIComponent(editingId), {
+        method: 'PATCH', body: JSON.stringify({ cookedOn: editingDate, notes: editingNotes.trim() || null }),
+      });
+      setEditingId(null);
+      await loadHistory(detailSlug);
+      const result = await api<{ items: RecipeSummary[] }>('/recipes?q=' + encodeURIComponent(query));
+      setRecipes(result.items);
+      setNotice('Cooking note updated.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update your note'); }
     finally { setSaving(false); }
   }
   async function deleteCook(id: string) {
@@ -268,24 +299,35 @@ export default function App() {
                     {!!detail.sources.length && <div className="sources"><h3>Published sources</h3>
                       {detail.sources.map((s, i) => <a key={i} href={s.url} target="_blank" rel="noreferrer">Read source ↗</a>)}</div>}
                   </div>
-                  <aside className="history-panel">
+                  <aside className="history-panel" aria-label="Your private cooking journal">
                     <p className="eyebrow">YOUR KITCHEN JOURNAL</p>
-                    <h2>Made this before?</h2>
+                    <h2>A little note for next time.</h2>
+                    <p className="journal-intro">Remember the changes, the company, or the little things that made this recipe yours.</p>
                     {session ? <>
                       <form onSubmit={e => void logCook(e)} className="cook-form">
+                        <h3>Made this recipe?</h3>
                         <label>When did you cook it?<input type="date" required value={cookedOn} onChange={e => setCookedOn(e.target.value)} /></label>
-                        <label>Notes <span className="optional">(optional)</span>
-                          <textarea rows={4} maxLength={4000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="What worked? Anything to change next time?" /></label>
-                        <button className="primary" type="submit" disabled={saving}>{saving ? 'Saving…' : '+ Log this cook'}</button>
+                        <label>Your notes <span className="optional">(optional)</span>
+                          <textarea rows={4} maxLength={4000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="What worked? What would you do differently?" /></label>
+                        <button className="primary" type="submit" disabled={saving}>{saving ? 'Saving…' : '+ Add to my cooking journal'}</button>
                       </form>
-                      <h3>Cooking history <span className="history-count">{history.length}</span></h3>
-                      {history.length === 0 && <p className="muted">Your first cooking note will appear here.</p>}
-                      {history.map(x => <article className="history-entry" key={x.id}>
-                        <div><b>{friendlyDate(x.cookedOn)}</b><button onClick={() => void deleteCook(x.id)} type="button" aria-label={'Delete entry from ' + x.cookedOn}>Delete</button></div>
-                        {x.notes && <p>{x.notes}</p>}
-                      </article>)}
-                    </> : <><p className="muted">Sign in to save dated cooking notes and see what you've made before.</p>
-                      <button className="primary" type="button" onClick={() => setAuthOpen(true)}>Sign in to log a cook</button></>}
+                      <div className="journal-divider" />
+                      <h3 className="journal-history-heading">Your past cooks <span className="history-count">{historyLoading ? '…' : history.length}</span></h3>
+                      {historyLoading && <p className="muted" role="status">Loading your notes…</p>}
+                      {!historyLoading && history.length === 0 && <p className="muted">Your first entry will appear here. Every time you cook this recipe, you can add another.</p>}
+                      {!historyLoading && <div className="journal-timeline">{history.map(x => <article className="history-entry" key={x.id}>
+                        {editingId === x.id ? <form className="journal-edit-form" onSubmit={e => void saveEdit(e)}>
+                          <label>Cooking date<input type="date" required value={editingDate} onChange={e => setEditingDate(e.target.value)} /></label>
+                          <label>Notes<textarea rows={4} maxLength={4000} value={editingNotes} onChange={e => setEditingNotes(e.target.value)} /></label>
+                          <div className="journal-actions"><button className="primary" disabled={saving} type="submit">{saving ? 'Saving…' : 'Save changes'}</button><button className="secondary" type="button" onClick={() => setEditingId(null)}>Cancel</button></div>
+                        </form> : <>
+                          <div className="journal-entry-header"><time dateTime={x.cookedOn}>{friendlyDate(x.cookedOn)}</time><span className="journal-entry-mark" aria-hidden="true">✦</span></div>
+                          {x.notes ? <p className="journal-entry-notes">{x.notes}</p> : <p className="journal-entry-notes journal-empty-note">No notes added for this occasion.</p>}
+                          <div className="journal-entry-actions"><button onClick={() => beginEdit(x)} type="button" aria-label={'Edit entry from ' + x.cookedOn}>Edit note</button><button onClick={() => void deleteCook(x.id)} type="button" aria-label={'Delete entry from ' + x.cookedOn}>Delete</button></div>
+                        </>}
+                      </article>)}</div>}
+                    </> : <div className="journal-signin"><p>Sign in to keep your own private, dated notes for every recipe you make.</p>
+                      <button className="primary" type="button" onClick={() => setAuthOpen(true)}>Sign in to start your journal</button></div>}
                   </aside>
                 </div>
               </>
