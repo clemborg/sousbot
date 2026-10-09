@@ -105,7 +105,7 @@ app.get('/api/v1/recipes', optionalAuth, async (req, res) => {
 app.get('/api/v1/recipes/:slug', optionalAuth, async (req, res) => {
   const [r] = await db.select({ id: recipes.id, slug: recipes.slug, title: recipes.title,
     servings: recipes.servings, directions: recipes.directions, displayPolicy: recipes.directionsDisplayPolicy })
-    .from(recipes).where(and(eq(recipes.slug, req.params.slug), eq(recipes.status, 'published'))).limit(1);
+    .from(recipes).where(and(eq(recipes.slug, String(req.params.slug)), eq(recipes.status, 'published'))).limit(1);
   if (!r) { res.status(404).json({ error: 'Recipe not found' }); return; }
   const [summary] = await enrich([{ id: r.id, slug: r.slug, title: r.title, servings: r.servings }], req.userId);
   const [lines, sources, refs] = await Promise.all([
@@ -123,7 +123,7 @@ app.get('/api/v1/recipes/:slug', optionalAuth, async (req, res) => {
 
 app.get('/api/v1/recipes/:slug/cooking-sessions', ...authRequired, async (req, res) => {
   const [r] = await db.select({ id: recipes.id }).from(recipes)
-    .where(and(eq(recipes.slug, req.params.slug), eq(recipes.status, 'published'))).limit(1);
+    .where(and(eq(recipes.slug, String(req.params.slug)), eq(recipes.status, 'published'))).limit(1);
   if (!r) { res.status(404).json({ error: 'Recipe not found' }); return; }
   const rows = await db.select({ id: cookingSessions.id, cookedOn: cookingSessions.cookedOn,
     notes: cookingSessions.notes, createdAt: cookingSessions.createdAt, updatedAt: cookingSessions.updatedAt })
@@ -136,7 +136,7 @@ app.post('/api/v1/recipes/:slug/cooking-sessions', ...authRequired, async (req, 
   const parsed = cookingSessionInputSchema.safeParse(req.body);
   if (!parsed.success) { res.status(422).json({ error: 'Invalid cooking log', details: parsed.error.flatten() }); return; }
   const [r] = await db.select({ id: recipes.id }).from(recipes)
-    .where(and(eq(recipes.slug, req.params.slug), eq(recipes.status, 'published'))).limit(1);
+    .where(and(eq(recipes.slug, String(req.params.slug)), eq(recipes.status, 'published'))).limit(1);
   if (!r) { res.status(404).json({ error: 'Recipe not found' }); return; }
   const [saved] = await db.insert(cookingSessions).values({
     userId: req.userId!, recipeId: r.id, cookedOn: parsed.data.cookedOn, notes: parsed.data.notes ?? null,
