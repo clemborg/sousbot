@@ -84,6 +84,11 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [owned, setOwned] = useState<OwnedBook[]>([]);
+  const [bookFilter, setBookFilter] = useState<'all' | 'mine'>('all');
+  const [bookSearch, setBookSearch] = useState('');
+  const [booksLoading, setBooksLoading] = useState(false);
+  const [booksError, setBooksError] = useState('');
+  const [bookBusyId, setBookBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
@@ -130,13 +135,22 @@ export default function App() {
 
   useEffect(() => {
     if (view !== 'books') return;
-    void api<{ items: Book[] }>('/books').then(x => setBooks(x.items))
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load books'));
-    if (session) {
-      void api<{ items: OwnedBook[] }>('/me/books').then(x => setOwned(x.items))
-        .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load your bookshelf'));
-    } else setOwned([]);
+    let live = true;
+    setBooksLoading(true);
+    setBooksError('');
+    void Promise.all([
+      api<{ items: Book[] }>('/books'),
+      session ? api<{ items: OwnedBook[] }>('/me/books') : Promise.resolve({ items: [] as OwnedBook[] }),
+    ]).then(([catalog, shelf]) => {
+      if (!live) return;
+      setBooks(catalog.items);
+      setOwned(shelf.items);
+    }).catch((e: unknown) => {
+      if (live) setBooksError(e instanceof Error ? e.message : 'Could not load cookbooks');
+    }).finally(() => { if (live) setBooksLoading(false); });
+    return () => { live = false; };
   }, [view, session?.access_token]);
+
 
   function search(term: string) {
     setTyped(term);
@@ -203,16 +217,20 @@ export default function App() {
   }
   async function addBook(bookId: string) {
     if (!session) { setAuthOpen(true); return; }
+    setBookBusyId(bookId);
     try {
       await api('/me/books', { method: 'POST', body: JSON.stringify({ bookId }) });
       setOwned((await api<{ items: OwnedBook[] }>('/me/books')).items);
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to add book'); }
+    finally { setBookBusyId(null); }
   }
   async function removeBook(userBookId: string) {
+    setBookBusyId(userBookId);
     try {
       await api('/me/books/' + encodeURIComponent(userBookId), { method: 'DELETE' });
       setOwned((await api<{ items: OwnedBook[] }>('/me/books')).items);
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to remove book'); }
+    finally { setBookBusyId(null); }
   }
 
   return (
@@ -337,22 +355,51 @@ export default function App() {
 
         {view === 'books' && (
           <section className="results books-page">
-            <p className="eyebrow">YOUR PERSONAL SHELF</p><h1>My Cookbooks</h1>
-            <p className="muted">Keep track of the books you own. The full recipe catalog remains searchable even without a cookbook.</p>
-            {!session && <p className="banner">Sign in to add cookbooks to your shelf.</p>}
-            {books.length === 0 ? <div className="empty">No cookbooks have been imported into the catalog yet.</div> :
-              <div className="book-grid">{books.map(book => {
-                const membership = owned.find(x => x.bookId === book.id);
-                return <article className="book-card" key={book.id}>
-                  <div className="cover-placeholder" aria-hidden="true">SOUSBOT<br />COOKBOOK</div>
-                  <h3>{book.title}</h3>
-                  {membership
-                    ? <button onClick={() => void removeBook(membership.id)} className="secondary">✓ On your shelf · Remove</button>
-                    : <button onClick={() => void addBook(book.id)} className="secondary">+ Add to my shelf</button>}
-                </article>;
-              })}</div>}
+            <div className="books-intro">
+              <div>
+                <p className="eyebrow">A LIBRARY OF GOOD THINGS</p>
+                <h1>Your cookbook shelf<span className="brand-dot">.</span></h1>
+                <p className="muted">A home for the cookbooks you love. Build your own shelf, and browse the full collection for new inspiration.</p>
+              </div>
+              <div className="books-intro-art" aria-hidden="true"><span>❧</span><span>✳</span></div>
+            </div>
+            {!session && <div className="shelf-signin"><span>Keep track of your collection across devices.</span><button type="button" onClick={() => setAuthOpen(true)}>Sign in to save books →</button></div>}
+            <div className="shelf-toolbar">
+              <div className="shelf-tabs" role="group" aria-label="Choose cookbook collection">
+                <button type="button" aria-pressed={bookFilter === 'all'} className={bookFilter === 'all' ? 'selected' : ''} onClick={() => setBookFilter('all')}>All cookbooks <span>{books.length}</span></button>
+                <button type="button" aria-pressed={bookFilter === 'mine'} className={bookFilter === 'mine' ? 'selected' : ''} onClick={() => setBookFilter('mine')}>My shelf <span>{owned.length}</span></button>
+              </div>
+              <label className="shelf-search"><span className="sr-only">Search cookbooks by title</span><span aria-hidden="true">⌕</span><input type="search" placeholder="Find a cookbook…" value={bookSearch} onChange={e => setBookSearch(e.target.value)} /></label>
+            </div>
+            {booksLoading ? <div className="empty" role="status">Opening the cookbook library…</div>
+              : booksError ? <div className="empty" role="alert"><h3>We couldn't open the library.</h3><p>{booksError}</p><button type="button" onClick={() => { setView('discover'); window.setTimeout(() => setView('books'), 0); }}>Try again</button></div>
+              : (() => {
+                const visible = books.filter(book => (bookFilter === 'all' || owned.some(x => x.bookId === book.id))
+                  && book.title.toLocaleLowerCase().includes(bookSearch.trim().toLocaleLowerCase()));
+                return visible.length === 0 ? <div className="empty shelf-empty">
+                  <h3>{bookSearch.trim() ? 'No matching cookbooks.' : bookFilter === 'mine' ? 'Your shelf is waiting.' : 'The library is still growing.'}</h3>
+                  <p>{bookSearch.trim() ? 'Try another title or clear your search.' : bookFilter === 'mine' ? 'Browse the full library and add a few favorites to get started.' : 'Cookbooks will appear as verified records are added to the catalog.'}</p>
+                  {bookSearch.trim() ? <button type="button" onClick={() => setBookSearch('')}>Clear search</button>
+                    : bookFilter === 'mine' ? <button type="button" onClick={() => setBookFilter('all')}>Browse all cookbooks</button> : null}
+                </div> : <div className="book-grid">{visible.map((book, index) => {
+                  const membership = owned.find(x => x.bookId === book.id);
+                  const busy = bookBusyId === book.id || bookBusyId === membership?.id;
+                  return <article className="book-card" key={book.id}>
+                    <div className={'cover-placeholder cover-style-' + (index % 4)} aria-hidden="true">
+                      <span className="cover-ornament">❧</span>
+                      <span className="cover-title">{book.title}</span>
+                      <span className="cover-imprint">SOUSBOT LIBRARY</span>
+                    </div>
+                    <h3>{book.title}</h3>
+                    {membership
+                      ? <button type="button" disabled={busy} onClick={() => void removeBook(membership.id)} className="secondary on-shelf">{busy ? 'Updating…' : '✓ On your shelf · Remove'}</button>
+                      : <button type="button" disabled={busy} onClick={() => void addBook(book.id)} className="secondary">{busy ? 'Adding…' : '+ Add to my shelf'}</button>}
+                  </article>;
+                })}</div>;
+              })()}
           </section>
         )}
+
       </main>
       {authOpen && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setAuthOpen(false); }}>
         <div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
