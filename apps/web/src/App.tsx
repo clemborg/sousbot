@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createClient, type Session } from '@supabase/supabase-js';
 import type { CookingSession, RecipeDetail, RecipeSummary } from '@sousbot/shared';
 
@@ -10,6 +10,9 @@ const supabase = supabaseUrl && supabaseKey && !supabaseKey.startsWith('replace_
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
 type Book = { id: string; title: string; slug: string };
 type OwnedBook = { id: string; bookId: string; title: string };
+const AUTH_INTENT_KEY = 'sousbot:pending-auth-intent';
+type AuthIntent = { view: 'discover' | 'books'; recipeSlug: string | null; bookId: string | null; cookedOn: string; notes: string };
+function readIntent(): AuthIntent | null { try { const raw = sessionStorage.getItem(AUTH_INTENT_KEY); return raw ? JSON.parse(raw) as AuthIntent : null; } catch { return null; } }
 const suggestions = ['Brussels sprouts', 'Miso', 'Chicken', 'Mushrooms', 'Pasta'];
 
 function localToday() {
@@ -81,6 +84,12 @@ export default function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
+  const [authSending, setAuthSending] = useState(false);
+  const [authSent, setAuthSent] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [pendingBookId, setPendingBookId] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const authEmailRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [owned, setOwned] = useState<OwnedBook[]>([]);
@@ -93,11 +102,53 @@ export default function App() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!supabase) return;
-    void supabase.auth.getSession().then(x => setSession(x.data.session));
-    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
+    if (!supabase) { setAuthReady(true); return; }
+    let active = true;
+    void supabase.auth.getSession().then(({ data, error: sessionError }) => {
+      if (!active) return;
+      setSession(data.session);
+      setAuthReady(true);
+      if (sessionError) setAuthError(sessionError.message);
+    }).catch(() => { if (active) setAuthReady(true); });
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return;
+      setSession(nextSession);
+      setAuthReady(true);
+    });
+    return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
+
+  useEffect(() => {
+    if (!authReady || !session) return;
+    const intent = readIntent();
+    if (!intent) return;
+    sessionStorage.removeItem(AUTH_INTENT_KEY);
+    setView(intent.view);
+    setDetailSlug(intent.recipeSlug);
+    setCookedOn(intent.cookedOn);
+    setNotes(intent.notes);
+    setPendingBookId(intent.bookId);
+    setAuthOpen(false);
+    setNotice('Signed in. You can now finish saving your ' + (intent.bookId ? 'cookbook.' : 'cooking note.'));
+  }, [authReady, session?.user.id]);
+
+  useEffect(() => {
+    if (!authOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    authEmailRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setAuthOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('keydown', onKey); previous?.focus(); };
+  }, [authOpen]);
+
+  function openSignIn(bookId: string | null = null) {
+    setAuthError('');
+    setAuthSent(false);
+    setPendingBookId(bookId);
+    const intent: AuthIntent = { view, recipeSlug: detailSlug, bookId, cookedOn, notes };
+    try { sessionStorage.setItem(AUTH_INTENT_KEY, JSON.stringify(intent)); } catch { /* private browsing may block storage */ }
+    setAuthOpen(true);
+  }
 
   useEffect(() => {
     let live = true;
@@ -162,12 +213,19 @@ export default function App() {
   }
   async function signIn(e: FormEvent) {
     e.preventDefault();
-    if (!supabase) { setError('Supabase keys are not yet configured.'); return; }
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email: email.trim(), options: { emailRedirectTo: window.location.origin },
-    });
-    if (authError) setError(authError.message);
-    else { setNotice('Check your email for a sign-in link.'); setAuthOpen(false); }
+    if (!supabase) { setAuthError('Sign-in is not configured yet. Please try again later.'); return; }
+    if (authSending) return;
+    setAuthSending(true);
+    setAuthError('');
+    try {
+      const { error: signInError } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin + window.location.pathname, shouldCreateUser: true },
+      });
+      if (signInError) setAuthError(signInError.message);
+      else setAuthSent(true);
+    } catch { setAuthError('We could not send the email. Please try again.'); }
+    finally { setAuthSending(false); }
   }
   async function logCook(e: FormEvent) {
     e.preventDefault();
@@ -216,7 +274,7 @@ export default function App() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete'); }
   }
   async function addBook(bookId: string) {
-    if (!session) { setAuthOpen(true); return; }
+    if (!session) { openSignIn(bookId); return; }
     setBookBusyId(bookId);
     try {
       await api('/me/books', { method: 'POST', body: JSON.stringify({ bookId }) });
@@ -245,7 +303,7 @@ export default function App() {
         </nav>
         {session
           ? <button className="account" onClick={() => void supabase?.auth.signOut()} type="button">Sign out</button>
-          : <button className="account" onClick={() => setAuthOpen(true)} type="button">Sign in</button>}
+          : <button className="account" onClick={() => openSignIn()} type="button">Sign in</button>}
       </header>
       <main>
         {notice && <div className="notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss">×</button></div>}
@@ -345,7 +403,7 @@ export default function App() {
                         </>}
                       </article>)}</div>}
                     </> : <div className="journal-signin"><p>Sign in to keep your own private, dated notes for every recipe you make.</p>
-                      <button className="primary" type="button" onClick={() => setAuthOpen(true)}>Sign in to start your journal</button></div>}
+                      <button className="primary" type="button" onClick={() => openSignIn()}>Sign in to start your journal</button></div>}
                   </aside>
                 </div>
               </>
@@ -363,7 +421,7 @@ export default function App() {
               </div>
               <div className="books-intro-art" aria-hidden="true"><span>❧</span><span>✳</span></div>
             </div>
-            {!session && <div className="shelf-signin"><span>Keep track of your collection across devices.</span><button type="button" onClick={() => setAuthOpen(true)}>Sign in to save books →</button></div>}
+            {!session && <div className="shelf-signin"><span>Keep track of your collection across devices.</span><button type="button" onClick={() => openSignIn()}>Sign in to save books →</button></div>}
             <div className="shelf-toolbar">
               <div className="shelf-tabs" role="group" aria-label="Choose cookbook collection">
                 <button type="button" aria-pressed={bookFilter === 'all'} className={bookFilter === 'all' ? 'selected' : ''} onClick={() => setBookFilter('all')}>All cookbooks <span>{books.length}</span></button>
@@ -401,16 +459,29 @@ export default function App() {
         )}
 
       </main>
+      {session && pendingBookId && view === 'books' && <div className="intent-banner" role="status">
+        <span>You're signed in. Ready to add this cookbook to your shelf?</span>
+        <button type="button" disabled={bookBusyId === pendingBookId} onClick={() => { const id = pendingBookId; setPendingBookId(null); void addBook(id); }}>Add to my shelf</button>
+        <button type="button" onClick={() => setPendingBookId(null)} aria-label="Dismiss pending cookbook">×</button>
+      </div>}
       {authOpen && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setAuthOpen(false); }}>
-        <div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-          <button className="close" onClick={() => setAuthOpen(false)} aria-label="Close">×</button>
-          <p className="eyebrow">YOUR PERSONAL RECIPE JOURNAL</p>
-          <h2 id="auth-title">Welcome to Sousbot</h2>
-          <p className="muted">Sign in to keep a record of everything you've cooked.</p>
-          <form onSubmit={e => void signIn(e)}>
-            <label>Email address<input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>
-            <button className="primary" type="submit">Send sign-in link</button>
-          </form>
+        <div className="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" aria-describedby="auth-description">
+          <button type="button" className="close" onClick={() => setAuthOpen(false)} aria-label="Close">×</button>
+          <p className="eyebrow">WELCOME TO SOUSBOT</p>
+          {authSent ? <>
+            <h2 id="auth-title">Check your email.</h2>
+            <p id="auth-description" className="muted">We sent a sign-in link to <strong>{email.trim()}</strong>. Open it to continue. The link may take a moment to arrive.</p>
+            <button type="button" className="secondary" onClick={() => { setAuthSent(false); setAuthError(''); }}>Use a different email</button>
+            <button type="button" className="auth-resend" disabled={authSending} onClick={() => void signIn({ preventDefault() {} } as FormEvent)}>{authSending ? 'Sending…' : 'Resend sign-in link'}</button>
+          </> : <>
+            <h2 id="auth-title">Continue with email.</h2>
+            <p id="auth-description" className="muted">No password needed. New to Sousbot? We'll create your account automatically.</p>
+            <form onSubmit={e => void signIn(e)}>
+              <label>Email address<input ref={authEmailRef} type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>
+              <button className="primary" type="submit" disabled={authSending}>{authSending ? 'Sending your link…' : 'Send me a sign-in link →'}</button>
+            </form>
+          </>}
+          {authError && <p className="auth-inline-error" role="alert">{authError}</p>}
         </div>
       </div>}
       <footer>SOUSBOT <span>· A little help deciding what to cook.</span></footer>
