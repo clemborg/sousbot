@@ -149,3 +149,27 @@ nav button.active{border-bottom:0;font-weight:700}
 @media(max-width:650px){.topbar{height:66px;gap:16px;padding:0 17px}.brand{font-size:23px}nav{gap:12px}nav button{height:66px;font-size:11px}.account{font-size:11px;padding:8px 10px}.hero-inner{display:flex;flex-direction:column;align-items:stretch;padding:40px 21px 0;min-height:0}.hero-copy{padding:0}.hero h1{font-size:clamp(59px,14vw,78px);margin:19px 0}.hero-subtitle{font-size:15px;max-width:370px;margin-bottom:24px}.search-box{padding:5px 6px 5px 14px;gap:7px}.search-box button{padding:12px 13px;font-size:11px}.search-box input{font-size:12px}.quick-search{margin-top:20px}.hero-art{height:265px;overflow:hidden}.hero-art img{height:350px;width:auto;max-width:none;transform:translateY(27px)}.features{grid-template-columns:repeat(2,1fr);gap:10px;padding:22px 15px 35px}.feature{padding:8px 5px}.feature h3{font-size:12px}.feature p{font-size:11px}.section-top h2{font-size:30px}}
 @media(max-width:375px){.topbar{gap:10px}.brand{font-size:21px}nav{gap:8px}.account{padding:8px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.recipe-card{transition:none}}
+
+/* Recipe discovery and detail components */
+.recipe-card{padding:0;overflow:hidden;min-height:340px;align-items:stretch;border-radius:13px;background:var(--color-surface);border:1px solid #e5e2d8}
+.recipe-card-art{position:relative;display:flex;align-items:center;justify-content:center;min-height:122px;background:linear-gradient(120deg,#e8ebde,#f7f1e4);overflow:hidden}
+.recipe-art-leaf{position:relative;z-index:1;color:#758f68;font:400 86px Georgia,serif;transform:rotate(-21deg);line-height:1}
+.recipe-art-circle{position:absolute;width:105px;height:105px;border:2px solid #d0b782;border-radius:50%;transform:translate(52px,22px)}
+.recipe-card:nth-child(3n+2) .recipe-card-art{background:linear-gradient(125deg,#f4e9d9,#e8ebdd)}
+.recipe-card:nth-child(3n) .recipe-card-art{background:linear-gradient(125deg,#e6ebdf,#f2e5d4)}
+.recipe-card-body{display:flex;flex-direction:column;align-items:flex-start;flex:1;padding:22px 23px 24px}
+.recipe-card-tag{margin:0 0 12px;font-size:10px;letter-spacing:.12em;color:#6c8366}
+.recipe-card strong{font:400 26px/1.23 var(--font-display);letter-spacing:-.025em}
+.recipe-card-byline{font-size:12px;color:#777c72;margin-top:12px}
+.recipe-bookline{font-size:12px;color:#526a4f;margin-top:10px}
+.recipe-card-action{margin-top:auto;padding-top:20px;color:var(--color-sage);font-size:12px;font-weight:700}
+.cooking-preview{line-height:1.6}
+.detail{max-width:1200px}
+.detail>h1{max-width:950px;font:400 clamp(45px,6vw,78px)/1.1 var(--font-display);letter-spacing:-.04em}
+.detail-intro{border-top:1px solid #e2e2d5;margin-top:32px;padding-top:18px;color:#78806f;font:italic 17px var(--font-display)}
+.detail-columns{margin-top:35px}
+.recipe-body h2{font:400 32px var(--font-display)}
+.book-references span{display:inline-flex;background:#e8ecdf;border-radius:30px;padding:9px 15px;color:var(--color-sage);font-size:12px}
+.history-panel{border:1px solid #d9e2d2;border-radius:14px}
+.history-panel h2{font:400 33px var(--font-display)}
+@media(max-width:650px){.recipe-card{min-height:300px}.recipe-card-art{min-height:105px}.recipe-card-body{padding:19px 20px}.detail>h1{font-size:clamp(41px,11vw,57px)}.detail-intro{font-size:15px}}
