@@ -10,7 +10,7 @@ const supabase = supabaseUrl && supabaseKey && !supabaseKey.startsWith('replace_
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
 type Book = { id: string; title: string; slug: string };
 type OwnedBook = { id: string; bookId: string; title: string };
-const suggestions = ['Brussels sprouts', 'Miso', 'Mushrooms', 'Aubergine', 'Chicken', 'Lemons'];
+const suggestions = ['Brussels sprouts', 'Miso', 'Chicken', 'Mushrooms', 'Pasta'];
 
 function localToday() {
   const d = new Date();
@@ -60,6 +60,7 @@ function RecipeCard({ recipe, onOpen }: { recipe: RecipeSummary; onOpen: () => v
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [view, setView] = useState<'discover' | 'books'>('discover');
+  const [hasSearched, setHasSearched] = useState(false);
   const [typed, setTyped] = useState('');
   const [query, setQuery] = useState('');
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
@@ -128,6 +129,7 @@ export default function App() {
     setQuery(term.trim());
     setDetailSlug(null);
     setView('discover');
+    setHasSearched(true);
   }
   async function signIn(e: FormEvent) {
     e.preventDefault();
@@ -179,12 +181,12 @@ export default function App() {
   return (
     <div className="site-shell">
       <header className="topbar">
-        <button type="button" className="brand" onClick={() => { setDetailSlug(null); setView('discover'); }} aria-label="Sousbot home">
-          <span className="brand-mark">S</span><span>Sousbot</span>
+        <button type="button" className="brand" onClick={() => { setDetailSlug(null); setView('discover'); setHasSearched(false); }} aria-label="Sousbot home">
+          <span>Sousbot<span className="brand-dot">.</span></span>
         </button>
         <nav aria-label="Main navigation">
-          <button className={view === 'discover' ? 'active' : ''} onClick={() => { setDetailSlug(null); setView('discover'); }}>Discover</button>
-          <button className={view === 'books' ? 'active' : ''} onClick={() => { setDetailSlug(null); setView('books'); }}>My Books</button>
+          <button className={view === 'discover' ? 'active' : ''} onClick={() => { setDetailSlug(null); setView('discover'); }}>Recipes</button>
+          <button className={view === 'books' ? 'active' : ''} onClick={() => { setDetailSlug(null); setView('books'); }}>Cookbooks</button>
         </nav>
         {session
           ? <button className="account" onClick={() => void supabase?.auth.signOut()} type="button">Sign out</button>
@@ -197,22 +199,32 @@ export default function App() {
         {view === 'discover' && !detailSlug && (
           <>
             <section className="hero">
-              <p className="eyebrow">THE COOKBOOK, REIMAGINED</p>
-              <h1>What are you in the<br /><i>mood to cook?</i></h1>
-              <p>Start with an ingredient. Find something worth making.</p>
-              <form className="search-box" onSubmit={e => { e.preventDefault(); search(typed); }}>
-                <label className="sr-only" htmlFor="ingredient-search">Search ingredients or dishes</label>
-                <span aria-hidden="true">⌕</span>
-                <input id="ingredient-search" autoFocus placeholder="Try Brussels sprouts, miso, mushrooms…" value={typed}
-                  onChange={e => setTyped(e.target.value)} />
-                <button type="submit">Find recipes</button>
-              </form>
-              <div className="quick-search"><span>Try</span>{suggestions.map(x =>
-                <button type="button" key={x} onClick={() => search(x)}>{x}</button>)}</div>
+              <div className="hero-inner">
+                <div className="hero-copy">
+                  <p className="eyebrow">A LITTLE INSPIRATION FOR THE KITCHEN</p>
+                  <h1>Find what<br />to cook<span className="brand-dot">.</span></h1>
+                  <p className="hero-subtitle">Search ingredients, explore recipes from the world's cookbooks, and keep track of what you cook.</p>
+                  <form className="search-box" onSubmit={e => { e.preventDefault(); search(typed); }}>
+                    <label className="sr-only" htmlFor="ingredient-search">Search ingredients or dishes</label>
+                    <span className="search-glyph" aria-hidden="true">⌕</span>
+                    <input id="ingredient-search" placeholder="What would you like to cook?" value={typed} onChange={e => setTyped(e.target.value)} />
+                    <button type="submit">Search →</button>
+                  </form>
+                  <div className="quick-search"><span>Try an ingredient:</span><div className="ingredient-chips">{suggestions.map(x =>
+                    <button type="button" key={x} onClick={() => search(x)}>{x}</button>)}</div></div>
+                </div>
+                <div className="hero-art" aria-hidden="true"><img src="/illustrations/ingredient-still-life.svg" alt="" /></div>
+              </div>
             </section>
-            <section className="results">
-              <div className="section-top"><div><p className="eyebrow">YOUR RECIPE COLLECTION</p>
-                <h2>{query ? 'Recipes with “' + query + '”' : 'Explore recipes'}</h2></div>
+            {!hasSearched && <section className="features" aria-label="Sousbot features">
+              <div className="feature"><span aria-hidden="true">♧</span><h3>Great cookbooks</h3><p>Recipes from beloved cooks and authors.</p></div>
+              <div className="feature"><span aria-hidden="true">⌕</span><h3>Ingredient search</h3><p>Find inspiration from what you feel like cooking.</p></div>
+              <div className="feature"><span aria-hidden="true">▤</span><h3>Your cooking history</h3><p>Keep notes and remember what worked.</p></div>
+              <div className="feature"><span aria-hidden="true">❧</span><h3>Simple and focused</h3><p>A calm, thoughtful cooking companion.</p></div>
+            </section>}
+            <section className={"results" + (!hasSearched ? " results-home" : "")}>
+              <div className="section-top"><div><p className="eyebrow">DISCOVER SOMETHING DELICIOUS</p>
+                <h2>{query ? 'Recipes with “' + query + '”' : 'Explore the collection'}</h2></div>
                 <span className="result-count">{recipes.length} shown</span></div>
               {recipeLoading ? <p className="empty">Finding recipes…</p>
                 : recipes.length ? <div className="recipe-grid">{recipes.map(x =>
