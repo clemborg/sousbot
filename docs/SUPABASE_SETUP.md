@@ -52,3 +52,9 @@ No recipe JSON files have been migrated to Sousbot or imported into Supabase as 
 - The Node service holds the database URL and uses a privileged connection. It validates JWTs against Supabase Auth and scopes all personal data queries by verified user ID.
 - The catalog is not directly exposed via PostgREST: new catalog tables have RLS enabled without public policies. The Express REST API provides the public recipe reads.
 - Keep public repo source code free of real connection strings and secrets; configure them in your deployment provider when chosen.
+
+## Future hosting target: Vercel
+
+Sousbot is intended for **Vercel**, with `apps/web` and `apps/api` as separate Vercel projects linked to the same GitHub monorepo. This is a future deployment target; nothing is deployed yet. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
+
+For the Express API **on Vercel**, obtain the **Supabase transaction-pooler (port 6543)** connection string, not the direct host or the session pooler. Use TLS (`sslmode=require` in the connection string), a small client pool (1 per function instance), and no named prepared statements. Use a direct/session-capable connection for database migrations. Keep all connection strings out of the web bundle.

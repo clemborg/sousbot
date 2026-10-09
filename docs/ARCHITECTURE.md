@@ -9,7 +9,7 @@
 - **Validation/shared contracts:** Zod schemas in a shared workspace.
 - **Search:** PostgreSQL relational ingredient matching, aliases and title full-text/trigram indexes. No LLM in request path for MVP.
 - **Catalog ingestion:** version-controlled raw recipe JSON and audit ledgers; idempotent import into staging; controlled promotion to published catalog.
-- **Deployment:** undecided; design for static web hosting and independent Node API hosting; provide environment templates with no secrets.
+- **Deployment target (decided): Vercel**. Deploy the React/Vite web frontend and Express API as **two Vercel projects from this npm-workspace monorepo** (`apps/web` and `apps/api`). Supabase remains the database/Auth host; background recipe ingestion and auditing remain independent jobs, not resident Express processes. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
 
 ## Monorepo target
 
@@ -67,3 +67,11 @@ Book metadata and page references do not grant rights to republish copyrighted c
 ## Migration gate
 
 At time of scoping, **Sousbot does not yet contain the 155 JSON recipe files** in Clemport. The first engineering task is verified migration, inventory reconciliation and a repeatable importer, before a production catalog count can be displayed.
+
+## Deployment-first constraints (Vercel)
+
+- Vercel supports Express through a Node.js Function. The API module exports `app` and skips `app.listen()` in the Vercel environment, while keeping the local development listener.
+- A Vercel Function instance must **not** create a 10-connection Postgres pool; use a one-connection pool on Vercel with the Supabase **transaction pooler** endpoint (port 6543). Keep the pool at module scope for warm-instance reuse, use TLS, and avoid named prepared statements. A separate direct/session connection may be used for reviewed DB migrations.
+- The browser builds from `apps/web` and calls the deployed API via `VITE_API_BASE_URL`. Configure the backend's `WEB_ORIGIN` to the exact frontend origin; preview-origin policy requires explicit work before public preview releases.
+- Browser routes will need the Vite SPA fallback for deep links. Both Vercel projects must build `packages/shared` before their app package; preserve npm workspace installs.
+- Deploying the web and API does **not** automatically create tables or import the cookbook collection. Keep migrations and recipe ingestion separately controlled.

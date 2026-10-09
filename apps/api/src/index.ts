@@ -25,7 +25,8 @@ const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 if (!DATABASE_URL || !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error('Configure DATABASE_URL, SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in apps/api/.env');
 }
-const pool = new Pool({ connectionString: DATABASE_URL, max: 10 });
+// On Vercel each warm function instance has its own pool; keep it small.
+const pool = new Pool({ connectionString: DATABASE_URL, max: process.env.VERCEL ? 1 : 10 });
 const db = drizzle({ client: pool });
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -198,6 +199,10 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => console.log('Sousbot API listening on port ' + port));
-process.on('SIGTERM', async () => { await pool.end(); process.exit(0); });
+// Vercel runs the exported Express app as a Function; local Node runs a listener.
+export default app;
+if (!process.env.VERCEL) {
+  const port = Number(process.env.PORT ?? 4000);
+  app.listen(port, () => console.log('Sousbot API listening on port ' + port));
+  process.on('SIGTERM', async () => { await pool.end(); process.exit(0); });
+}

@@ -40,6 +40,15 @@ This is the sequenced execution backlog. Check items only once committed/tested;
 - [ ] Integration tests with two users proving private histories do not leak.
 - **Acceptance:** each cook adds a dated occasion; history persists across sessions; edits/deletions are authorized; users see their own shelf and notes only.
 
+## Deployment milestone — Vercel (after database/local vertical slice)
+
+- [ ] Connect **two Vercel projects** to this monorepo: `apps/web` as Vite and `apps/api` as Node/Express Function (project root directories).
+- [ ] Validate shared npm-workspace builds in Vercel, set the API URL for browser builds, and confirm web-to-API requests in preview and production.
+- [ ] Configure Vercel encrypted environment variables: public web Supabase URL/publishable key, API Supabase URL/publishable key, protected `DATABASE_URL` from Supabase transaction pooler, `WEB_ORIGIN`. Keep migration-only DB credentials outside the client.
+- [ ] Check SSL and Postgres pool size=1 in Functions. Verify health, ingredient search, Supabase Auth redirect and private cooking-history isolation on a deployed preview.
+- [ ] Set up Vite client-side route fallback, custom domain (optional), independent production and preview configs and smoke tests.
+- **Acceptance:** same public web app works via Vercel, a verified signed-in user can create/revisit a dated cooking note, and there are no client-visible database credentials.
+
 ## Phase 4 — hardening and unattended ingestion
 
 - [ ] Job scheduling and safe single-commit ingestion + audit in Sousbot/GitHub Actions; staging import jobs into Supabase.

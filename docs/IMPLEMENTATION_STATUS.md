@@ -28,3 +28,7 @@ GitHub Actions workflow `.github/workflows/verify.yml` successfully completed de
 ## First acceptance run
 
 Once DB access exists: `npm install`, `npm run typecheck`, `npm run build`; run `0001_foundation.sql`; `npm run dev`; confirm health endpoint, anonymous browse, email sign-in and two independent users' cooking histories. The catalog starts empty until explicitly populated.
+
+## Deployment target decided
+
+Vercel will host React/Vite and Express as two related projects from the same repository; Supabase remains the database and identity provider. The Express scaffold now supports an exported app and reduced connection pool in Vercel. See `docs/VERCEL_DEPLOYMENT.md`. The project has **not** been imported into or deployed on Vercel; no live database connection is claimed.
