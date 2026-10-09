@@ -28,6 +28,6 @@ Following migration and verification, the ChatGPT scheduled ingestion and audit 
 
 ## Application foundation (2026-10-09)
 
-Sousbot is being scoped as a **multi-user, ingredient-first recipe discovery web app** using React/TypeScript, a Node/Express API and PostgreSQL on Supabase. Any user can browse the shared recipe catalog; cookbook/owned-book filters are optional. Each cooking occasion is automatically dated and can contain private user notes, visible on subsequent visits.
+Sousbot now has a **starter monorepo** for a multi-user, ingredient-first recipe discovery web app** using React/TypeScript, a Node/Express API and PostgreSQL on Supabase. Any user can browse the shared recipe catalog; cookbook/owned-book filters are optional. Each cooking occasion is automatically dated and can contain private user notes, visible on subsequent visits.
 
-See **[Product and engineering specification](docs/README.md)** for user flows, database model, API contract, ingestion/audit policy and delivery roadmap. These documents are design work, not deployed code. The migration status above remains the source of truth until the legacy recipe files are verified in this repository.
+See **[Product and engineering specification](docs/README.md)** for user flows, database model, API contract, ingestion/audit policy and delivery roadmap. **App scaffold is committed and passes GitHub Actions TypeScript typecheck and build.** It is not deployed or connected to a live database. See **[Supabase setup](docs/SUPABASE_SETUP.md)** for exact environment and SQL migration steps, and [implementation status](docs/IMPLEMENTATION_STATUS.md) for what's not yet done. The legacy recipe migration remains outstanding.

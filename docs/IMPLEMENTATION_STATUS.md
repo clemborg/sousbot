@@ -11,15 +11,19 @@
 - Initial search, recipe detail, recipe cooking-session write/read/update/delete API and minimal frontend flows.
 - API only renders recipe method if `directions_display_policy = authorized`.
 
+## CI verification
+
+GitHub Actions workflow `.github/workflows/verify.yml` successfully completed dependency installation, TypeScript typechecking, and production builds on 2026-10-09. This does **not** validate database connectivity, migration execution, sign-in configuration, or two-user row authorization.
+
 ## Still outstanding (do not claim complete)
 
 - Executing migration against user's Supabase Postgres instance.
 - Providing database URL privately in API hosting/local environment; public publishable key env config.
-- Installing dependencies, compiling, running full integration tests in a configured environment.
+- Running the application end-to-end with a configured Supabase database and separate user accounts; automated integration tests are not yet present.
 - Migrating Clemport's 155 recipe JSON files into Sousbot and implementing the importer.
 - Publication/rights policy enforcement, source audit and ingredient normalization coverage.
 - Search ranking, cookbook filters/owned-books-only search, pagination, production hardening and deployment.
-- Formal automated tests and CI.
+- Formal automated integration tests and deployment configuration; CI for typechecking/build is now configured and green.
 
 ## First acceptance run
 
