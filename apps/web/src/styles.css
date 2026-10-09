@@ -207,3 +207,39 @@ nav button.active{border-bottom:0;font-weight:700}
 .journal-signin p{font-size:13px;line-height:1.7;color:#70776c}
 .journal-signin .primary{width:100%;font-size:12px}
 @media(max-width:650px){.history-panel{padding:25px 19px}.history-panel>h2{font-size:32px}.cook-form{padding:18px}.journal-timeline{padding-left:20px}.history-entry:before{left:-26px}}
+
+/* Illustrated cookbook library */
+.books-page{max-width:1280px}
+.books-intro{display:flex;align-items:center;justify-content:space-between;gap:32px;margin-bottom:31px;padding:12px 0 22px;border-bottom:1px solid #e4e0d6}
+.books-intro>div:first-child{max-width:640px}
+.books-intro h1{font:400 clamp(45px,5.6vw,72px)/1.1 var(--font-display);letter-spacing:-.055em;margin:17px 0 18px}
+.books-intro .muted{max-width:530px;font-size:15px;line-height:1.8}
+.books-intro-art{height:165px;width:225px;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:radial-gradient(ellipse,#e8e9d6,transparent 70%)}
+.books-intro-art span:first-child{font:400 155px Georgia,serif;color:#869a71;transform:rotate(-24deg)}
+.books-intro-art span:last-child{position:absolute;right:8px;top:7px;font:400 42px Georgia,serif;color:#c9a86d}
+.shelf-signin{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 21px;margin-bottom:26px;background:#e9eee1;border:1px solid #dbe4d2;border-radius:9px;font-size:13px;color:#53634e}
+.shelf-signin button{border:0;background:none;color:var(--color-sage);font-weight:700;font-size:12px}
+.shelf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:25px;margin-bottom:30px}
+.shelf-tabs{display:flex;gap:23px;border-bottom:1px solid #e2e0d4}
+.shelf-tabs button{border:0;border-bottom:2px solid transparent;background:none;padding:12px 3px;color:#7b7e72;font-size:13px;font-weight:600;white-space:nowrap}
+.shelf-tabs button.selected{border-bottom-color:var(--color-sage);color:var(--color-sage)}
+.shelf-tabs button span{font-size:11px;color:#86917f;margin-left:5px}
+.shelf-search{display:flex;align-items:center;gap:8px;min-width:260px;padding:8px 13px;border:1px solid #deded2;background:#fff;border-radius:25px}
+.shelf-search>span:not(.sr-only){font-size:22px;color:#7c8776}
+.shelf-search input{min-width:0;width:100%;border:0;outline:0;background:none;font-size:12px;color:#303b2d}
+.book-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.book-card{display:flex;flex-direction:column;padding:15px;background:#fffdf9;border:1px solid #e6e2d8;border-radius:12px;box-shadow:0 3px 12px #35391e08}
+.cover-placeholder{display:flex;flex-direction:column;justify-content:space-between;align-content:initial;min-height:270px;padding:23px 18px 17px;border-radius:4px;box-shadow:inset 5px 0 8px #1e261f18,4px 5px 10px #242b2118;background:#617b65;color:#fff;letter-spacing:0}
+.cover-style-1{background:#b99a6b;color:#302d24}
+.cover-style-2{background:#b36e57;color:#fff8e9}
+.cover-style-3{background:#798e8d;color:#fff}
+.cover-ornament{align-self:center;font:400 52px Georgia,serif;opacity:.65}
+.cover-title{font:400 clamp(19px,2vw,28px)/1.15 var(--font-display);overflow-wrap:anywhere;letter-spacing:-.02em}
+.cover-imprint{font:600 9px var(--font-body);letter-spacing:.18em;opacity:.8}
+.book-card h3{font:500 16px/1.4 var(--font-display);margin:18px 2px 14px}
+.book-card .secondary{margin-top:auto;border-radius:7px;font-size:11px;padding:12px 9px}
+.book-card .on-shelf{background:#e9eee1;color:#3c643b;border-color:#c9d9c1}
+.book-card button:disabled{opacity:.6;cursor:wait}
+.shelf-empty{margin-top:25px}
+@media(max-width:950px){.book-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cover-placeholder{min-height:235px}}
+@media(max-width:650px){.books-intro{gap:10px}.books-intro-art{width:90px;height:100px}.books-intro-art span:first-child{font-size:78px}.books-intro-art span:last-child{font-size:20px}.books-intro h1{font-size:44px}.books-intro .muted{font-size:13px}.shelf-signin{align-items:flex-start;flex-direction:column;gap:9px}.shelf-toolbar{align-items:stretch;flex-direction:column;gap:18px}.shelf-tabs{justify-content:space-between}.shelf-search{min-width:0;width:100%}.book-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.book-card{padding:10px}.cover-placeholder{min-height:185px;padding:16px 11px 12px}.cover-ornament{font-size:35px}.cover-title{font-size:19px}.cover-imprint{font-size:7px}.book-card h3{font-size:14px}}
