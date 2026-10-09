@@ -1,6 +1,6 @@
 # Sousbot — product and engineering specification
 
-**Status:** Foundation scoped, implementation not yet started.  
+**Status:** Application scaffold committed; Vercel pilot scoped; not yet deployed.  
 **Last updated:** 2026-10-09.
 
 Sousbot is an ingredient-first recipe discovery web app. It maintains a shared recipe catalog, connects recipes to cookbooks when supported by evidence, and lets each user privately record **dated cooking occasions and notes**. A cookbook is an optional filter, not a requirement to use the product.
@@ -14,6 +14,8 @@ Sousbot is an ingredient-first recipe discovery web app. It maintains a shared r
 5. [API contract](API_CONTRACT.md) — initial endpoints, search semantics and example requests.
 6. [Data operations](DATA_OPERATIONS.md) — migration, incremental ingest, validation, provenance, publication.
 7. [Implementation roadmap](ROADMAP.md) — sequenced deliverables with explicit definition of done.
+8. [First Vercel pilot scope](VERCEL_RELEASE_SCOPE.md) — launch criteria, two-project setup, env matrix, GitHub issues and blockers.
+9. [Vercel deployment runbook](VERCEL_DEPLOYMENT.md) — hosting details and deployment risks.
 
 ## Principles
 
@@ -26,4 +28,4 @@ Sousbot is an ingredient-first recipe discovery web app. It maintains a shared r
 
 ## Current repository status
 
-At the time these docs were created, Sousbot itself contained only the initialization README and a migration-status note. The legacy collection of **155 JSON files remains in Clemport** pending a verified copy. These specs do **not** claim that data or application code has already been migrated. Scheduled ChatGPT ingestion/auditing remain paused until data movement is verified. Never seed, count, or publish presumed migrated records.
+A React/Vite web scaffold, Express API, shared TypeScript package, initial SQL migration, and GitHub Actions build verification have been committed. **This is not a deployed app**, and the Supabase schema has **not been applied**. The legacy collection of **155 JSON files remains in Clemport** pending a verified copy. The ingestion/audit tasks remain paused until migration is verified. Never seed, count, or publish presumed migrated records.
