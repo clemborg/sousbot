@@ -1,9 +1,11 @@
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Configure ${name} in apps/api/.env (or Vercel project env)`);
+function required(...names: string[]): string {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
   }
-  return value;
+  throw new Error(
+    `Configure ${names.join(' or ')} in apps/api/.env (or Vercel project env)`,
+  );
 }
 
 function defaultWebOrigin(): string {
@@ -23,9 +25,9 @@ export type ApiEnv = {
 
 export function loadApiEnv(): ApiEnv {
   return {
-    databaseUrl: required('DATABASE_URL'),
+    databaseUrl: required('DATABASE_URL', 'POSTGRES_URL'),
     supabaseUrl: required('SUPABASE_URL'),
-    supabasePublishableKey: required('SUPABASE_PUBLISHABLE_KEY'),
+    supabasePublishableKey: required('SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ANON_KEY'),
     webOrigin: defaultWebOrigin(),
     isVercel: Boolean(process.env.VERCEL),
     port: Number(process.env.PORT ?? 4000),
