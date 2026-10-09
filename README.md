@@ -25,3 +25,9 @@ Author attribution and cookbook membership are different kinds of claims; cookbo
 ## Planned automation
 
 Following migration and verification, the ChatGPT scheduled ingestion and audit tasks can be retargeted here. A longer-term option is GitHub Actions running unattended via GitHub Secrets and the OpenAI API.
+
+## Application foundation (2026-10-09)
+
+Sousbot is being scoped as a **multi-user, ingredient-first recipe discovery web app** using React/TypeScript, a Node/Express API and PostgreSQL on Supabase. Any user can browse the shared recipe catalog; cookbook/owned-book filters are optional. Each cooking occasion is automatically dated and can contain private user notes, visible on subsequent visits.
+
+See **[Product and engineering specification](docs/README.md)** for user flows, database model, API contract, ingestion/audit policy and delivery roadmap. These documents are design work, not deployed code. The migration status above remains the source of truth until the legacy recipe files are verified in this repository.
