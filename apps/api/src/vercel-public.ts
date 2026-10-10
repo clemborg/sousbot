@@ -1,7 +1,7 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Express, NextFunction, Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 
 function resolvePublicDir(): string | undefined {
   const here =
@@ -23,21 +23,37 @@ function resolvePublicDir(): string | undefined {
 /** Serves synced Vite output when the Express CDN static layer is not attached. */
 export function installVercelPublicFallback(app: Express): void {
   const publicDir = resolvePublicDir();
-  if (!publicDir) return;
+  if (!publicDir) {
+    app.get('/', (_req, res) => {
+      res.status(503).type('text/plain').send('UI not deployed (missing public/index.html).');
+    });
+    return;
+  }
 
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-    if (req.path.startsWith('/api/')) return next();
+  const indexHtml = readFileSync(join(publicDir, 'index.html'), 'utf8');
 
+  const sendIndex = (_req: Request, res: Response) => {
+    res.type('html').send(indexHtml);
+  };
+
+  app.get('/', sendIndex);
+
+  app.get(/^\/(assets|illustrations)\/.+/, (req, res) => {
     const relative = normalize(req.path.replace(/^\//, ''));
-    if (relative.includes('..')) return next();
-
-    const filePath = relative ? join(publicDir, relative) : join(publicDir, 'index.html');
-    if (existsSync(filePath)) {
-      res.sendFile(filePath);
+    if (relative.includes('..')) {
+      res.status(400).end();
       return;
     }
+    const filePath = join(publicDir, relative);
+    if (!existsSync(filePath)) {
+      res.status(404).end();
+      return;
+    }
+    res.sendFile(filePath);
+  });
 
-    res.sendFile(join(publicDir, 'index.html'));
+  app.get(/^(?!\/api\/).+/, (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    sendIndex(req, res);
   });
 }

@@ -22,6 +22,7 @@ function apiGateway(req: Request, res: Response, next: NextFunction): void {
 
 export function createApp() {
   const app = express();
+  installVercelPublicFallback(app);
   app.get('/api/v1/ping', (_req, res) => {
     res.json({ ok: true });
   });
@@ -30,7 +31,6 @@ export function createApp() {
   app.use('/api/v1', healthRouter);
   app.use('/api/v1', recipesRouter);
   app.use('/api/v1', booksRouter);
-  installVercelPublicFallback(app);
   app.use(errorHandler);
   return app;
 }
