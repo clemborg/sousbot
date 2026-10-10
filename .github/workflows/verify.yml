@@ -25,3 +25,13 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+      - name: Vercel build command (apps/api root)
+        run: |
+          cd ../..
+          npm run build -w @sousbot/shared
+          npm run build -w @sousbot/web
+          node scripts/sync-web-to-api-public.mjs
+          node scripts/sync-public-to-dist.mjs
+          test -f apps/api/public/index.html
+          test -f apps/api/dist/public/index.html
+        working-directory: apps/api

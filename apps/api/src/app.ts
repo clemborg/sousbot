@@ -32,12 +32,16 @@ export function createApp() {
   installVercelPublicFallback(app);
   app.get('/api/v1/debug-static', (_req, res) => {
     res.json({
-      build: 'entry-src-v2',
+      build: 'entry-src-v3',
       ...getPublicDirDiagnostics(),
     });
   });
   app.get('/api/v1/ping', (_req, res) => {
-    res.json({ ok: true, build: 'entry-src-v2' });
+    res.json({
+      ok: true,
+      build: 'entry-src-v3',
+      commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+    });
   });
   app.use('/api/v1', apiGateway);
   app.use(express.json({ limit: '32kb' }));

@@ -7,4 +7,8 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 ingestion/runs/*.json
-# Vite sync writes to apps/api/public at build time (must not gitignore for Vercel CDN).
+# Generated on each build (Vercel + CI); must not commit stale Vite asset hashes.
+apps/api/public/*
+!apps/api/public/.gitkeep
+apps/api/dist/public/
+.cursor/debug-*.log
