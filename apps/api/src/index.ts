@@ -1,9 +1,16 @@
-import express from 'express';
+import { createApp } from './app';
+import { closePool } from './db/client';
+import { getApiEnv } from './config/env';
 
-const app = express();
-
-app.get('/api/v1/ping', (_req, res) => {
-  res.json({ ok: true, mode: 'vercel-entry' });
-});
+const app = createApp();
 
 export default app;
+
+if (!process.env.VERCEL) {
+  const { port } = getApiEnv();
+  app.listen(port, () => console.log('Sousbot API listening on port ' + port));
+  process.on('SIGTERM', async () => {
+    await closePool();
+    process.exit(0);
+  });
+}
