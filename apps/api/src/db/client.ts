@@ -12,6 +12,7 @@ function ensurePool(): Pool {
     pool = new Pool({
       connectionString: env.databaseUrl,
       max: env.isVercel ? 1 : 10,
+      ssl: env.databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
     });
   }
   return pool;

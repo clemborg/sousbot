@@ -27,4 +27,7 @@ if (!existsSync(indexPath)) {
   process.exit(1);
 }
 
-console.log('sync-web-to-api-public: copied apps/web/dist → apps/api/public');
+const entries = readdirSync(publicDir);
+console.log(
+  `sync-web-to-api-public: copied apps/web/dist → apps/api/public (${entries.length} entries)`,
+);

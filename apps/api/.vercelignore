@@ -1,0 +1,2 @@
+# Do not ignore build output — Vite sync writes here for CDN static hosting.
+# (Only exclude heavy local artifacts if needed.)
