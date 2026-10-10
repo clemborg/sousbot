@@ -16,6 +16,7 @@ function loadPgPool(): Pool {
     pool = new PgPool({
       connectionString: env.databaseUrl,
       max: env.isVercel ? 1 : 10,
+      connectionTimeoutMillis: 10_000,
       ssl: env.databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
     });
   }
