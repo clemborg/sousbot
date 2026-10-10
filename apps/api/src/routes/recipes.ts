@@ -16,6 +16,7 @@ import {
   recipes,
 } from '../db/schema';
 import { authRequired, optionalAuth } from '../middleware/auth';
+import { asyncHandler } from '../middleware/async';
 import { enrichRecipeSummaries } from '../services/recipe-enrichment';
 
 export const recipesRouter = Router();
@@ -34,7 +35,7 @@ function publishedTextMatch(q: string) {
   );
 }
 
-recipesRouter.get('/recipes', optionalAuth, async (req, res) => {
+recipesRouter.get('/recipes', optionalAuth, asyncHandler(async (req, res) => {
   const parsed = searchSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(422).json({ error: 'Invalid search parameters', details: parsed.error.flatten() });
@@ -71,9 +72,9 @@ recipesRouter.get('/recipes', optionalAuth, async (req, res) => {
     .limit(limit);
 
   res.json({ items: await enrichRecipeSummaries(rows, req.userId), query: q, nextCursor: null });
-});
+}));
 
-recipesRouter.get('/recipes/:slug', optionalAuth, async (req, res) => {
+recipesRouter.get('/recipes/:slug', optionalAuth, asyncHandler(async (req, res) => {
   const [r] = await getDb()
     .select({
       id: recipes.id,
@@ -118,9 +119,9 @@ recipesRouter.get('/recipes/:slug', optionalAuth, async (req, res) => {
       verified: x.pageVerified,
     })),
   });
-});
+}));
 
-recipesRouter.get('/recipes/:slug/cooking-sessions', ...authRequired, async (req, res) => {
+recipesRouter.get('/recipes/:slug/cooking-sessions', ...authRequired, asyncHandler(async (req, res) => {
   const [r] = await getDb()
     .select({ id: recipes.id })
     .from(recipes)
@@ -142,9 +143,9 @@ recipesRouter.get('/recipes/:slug/cooking-sessions', ...authRequired, async (req
     .where(and(eq(cookingSessions.userId, req.userId!), eq(cookingSessions.recipeId, r.id)))
     .orderBy(desc(cookingSessions.cookedOn), desc(cookingSessions.createdAt));
   res.json({ items: rows });
-});
+}));
 
-recipesRouter.post('/recipes/:slug/cooking-sessions', ...authRequired, async (req, res) => {
+recipesRouter.post('/recipes/:slug/cooking-sessions', ...authRequired, asyncHandler(async (req, res) => {
   const parsed = cookingSessionInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(422).json({ error: 'Invalid cooking log', details: parsed.error.flatten() });
@@ -169,9 +170,9 @@ recipesRouter.post('/recipes/:slug/cooking-sessions', ...authRequired, async (re
     })
     .returning();
   res.status(201).json(saved);
-});
+}));
 
-recipesRouter.patch('/me/cooking-sessions/:id', ...authRequired, async (req, res) => {
+recipesRouter.patch('/me/cooking-sessions/:id', ...authRequired, asyncHandler(async (req, res) => {
   const id = z.string().uuid().safeParse(req.params.id);
   const input = cookingSessionPatchSchema.safeParse(req.body);
   if (!id.success || !input.success) {
@@ -188,9 +189,9 @@ recipesRouter.patch('/me/cooking-sessions/:id', ...authRequired, async (req, res
     return;
   }
   res.json(updated);
-});
+}));
 
-recipesRouter.delete('/me/cooking-sessions/:id', ...authRequired, async (req, res) => {
+recipesRouter.delete('/me/cooking-sessions/:id', ...authRequired, asyncHandler(async (req, res) => {
   const id = z.string().uuid().safeParse(req.params.id);
   if (!id.success) {
     res.status(422).json({ error: 'Invalid ID' });
@@ -205,4 +206,4 @@ recipesRouter.delete('/me/cooking-sessions/:id', ...authRequired, async (req, re
     return;
   }
   res.status(204).send();
-});
+}));
