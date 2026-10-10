@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "npm run build -w @sousbot/shared && concurrently -n api,web \"npm run dev -w @sousbot/api\" \"npm run dev -w @sousbot/web\"",
-    "build": "npm run build -w @sousbot/shared && npm run build -w @sousbot/api && npm run build -w @sousbot/web && node scripts/sync-web-to-api-public.mjs",
+    "build": "npm run build -w @sousbot/shared && npm run build -w @sousbot/api && npm run build -w @sousbot/web && node scripts/sync-web-to-api-public.mjs && node scripts/sync-public-to-dist.mjs",
     "typecheck": "npm run build -w @sousbot/shared && npm run typecheck -w @sousbot/api && npm run typecheck -w @sousbot/web",
     "db:generate": "npm run db:generate -w @sousbot/api",
     "import:recipes": "tsx automation/ingestion/import-recipes.ts",

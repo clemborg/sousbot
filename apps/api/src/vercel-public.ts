@@ -1,29 +1,29 @@
 import { existsSync } from 'node:fs';
-import { dirname, join, normalize } from 'node:path';
+import { dirname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Express, NextFunction, Request, Response } from 'express';
 
-function resolvePublicDir(): string {
+function resolvePublicDir(): string | undefined {
   const here =
     typeof __dirname !== 'undefined'
       ? __dirname
       : dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    join(process.cwd(), 'public'),
     join(here, 'public'),
     join(here, '..', 'public'),
+    join(process.cwd(), 'dist', 'public'),
+    join(process.cwd(), 'public'),
   ];
   for (const dir of candidates) {
-    if (existsSync(join(dir, 'index.html'))) return dir;
+    if (existsSync(join(dir, 'index.html'))) return resolve(dir);
   }
-  return candidates[0]!;
+  return undefined;
 }
 
-/** Serves synced Vite output when CDN static layer is unavailable (monorepo Express). */
+/** Serves synced Vite output when the Express CDN static layer is not attached. */
 export function installVercelPublicFallback(app: Express): void {
-  if (!process.env.VERCEL) return;
-
   const publicDir = resolvePublicDir();
+  if (!publicDir) return;
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
@@ -38,12 +38,6 @@ export function installVercelPublicFallback(app: Express): void {
       return;
     }
 
-    const indexPath = join(publicDir, 'index.html');
-    if (existsSync(indexPath)) {
-      res.sendFile(indexPath);
-      return;
-    }
-
-    next();
+    res.sendFile(join(publicDir, 'index.html'));
   });
 }

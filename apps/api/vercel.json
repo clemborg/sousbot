@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && npm install --no-audit --no-fund",
-  "buildCommand": "cd ../.. && npm run build -w @sousbot/shared && npm run build -w @sousbot/web && npm run build -w @sousbot/api && node scripts/sync-web-to-api-public.mjs",
+  "buildCommand": "cd ../.. && npm run build -w @sousbot/shared && npm run build -w @sousbot/web && npm run build -w @sousbot/api && node scripts/sync-web-to-api-public.mjs && node scripts/sync-public-to-dist.mjs",
   "functions": {
     "index.ts": {
-      "includeFiles": "public/**",
+      "includeFiles": "dist/public/**",
       "maxDuration": 30
     }
   }
