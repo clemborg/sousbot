@@ -36,7 +36,7 @@ Once DB access exists: `npm install`, env files, apply `0001` + `0002`, `npm run
 
 | Area | Location |
 |------|----------|
-| API entry | `apps/api/src/index.ts`, `apps/api/src/app.ts` |
+| API entry | `apps/api/index.ts`, `apps/api/src/server-app.ts`, `apps/api/src/app.ts` |
 | Routes | `apps/api/src/routes/` |
 | Schema | `apps/api/src/db/schema.ts` |
 | Web shell | `apps/web/src/App.tsx` |

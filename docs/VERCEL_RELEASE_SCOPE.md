@@ -19,7 +19,7 @@ GitHub recipe/audit archive → separately controlled importer → Supabase cata
 
 - **Hosting:** one Vercel project from `clemborg/sousbot` (`apps/api` root), npm workspaces, not Next.js.
 - **Data:** Supabase project `kkdswyfeznxrntungivm`, which is already identified in local example configuration. Keep its database password out of GitHub and chat; publishable keys may be used in browser builds, service-role/database credentials must never be there.
-- **API:** `apps/api/src/index.ts` exports Express's default application for Vercel Functions and only calls `listen()` outside Vercel.
+- **API:** `apps/api/index.ts` exports the bundled Express app for Vercel; `src/dev.ts` runs `listen()` locally.
 - **UI:** Vite build synced to `apps/api/public/` at build time; SPA rewrites in `apps/api/vercel.json`.
 - **Function → Postgres:** Supabase transaction pooler port 6543, TLS, conservative pool size (existing `pg.Pool` max=1 per Vercel function instance). Avoid named prepared statements/connection session state; migrations via separate approved channel.
 - **Authorization:** verified Supabase JWT on API; private queries always constrained by verified user ID even when privileged DB connection bypasses RLS. Public catalog only includes `published` recipes.
@@ -47,7 +47,7 @@ GitHub recipe/audit archive → separately controlled importer → Supabase cata
 | Root Directory | `apps/api` |
 | Framework | Express / Node.js Function |
 | Node | 22+ |
-| API entry | `src/index.ts` default export |
+| API entry | `index.ts` → `dist/index.js` default export |
 | Static UI | `public/` (synced from `apps/web/dist` at build) |
 | Shared dependency | `@sousbot/shared`; build before web and API |
 | Routing | SPA fallback + Express routes under `/api/v1` in [`apps/api/vercel.json`](../apps/api/vercel.json) |

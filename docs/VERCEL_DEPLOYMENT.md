@@ -28,7 +28,7 @@ The browser calls `/api/v1/...` on the same host when `VITE_API_BASE_URL` is uns
 
 1. Import GitHub repo `clemborg/sousbot` **once**:
    - **Root Directory:** `apps/api` (Framework: Express), Node 22+.
-   - Vercel recognizes `src/index.ts` with a default export; `listen()` runs only outside Vercel.
+   - Vercel recognizes `index.ts` (re-exports the bundled app in `dist/`); local dev uses `src/dev.ts` with `listen()`.
    - Install/build commands live in [`apps/api/vercel.json`](../apps/api/vercel.json): monorepo root install, build `@sousbot/shared`, `@sousbot/web`, `@sousbot/api`, then sync web `dist` → `public/`.
 2. **Environment variables** on the single project (Preview and Production as appropriate):
 
