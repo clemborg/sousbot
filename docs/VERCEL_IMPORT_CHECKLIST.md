@@ -38,7 +38,12 @@ Use this after local Supabase migrations and a successful `npm run db:seed` (or 
 
 - [ ] Dashboard → Authentication → URL Configuration: Site URL = production Vercel URL (or custom domain).
 - [ ] Redirect allowlist includes that URL and each **approved** preview URL.
-- [ ] Magic link: sign in from web → email → lands back on same host; session persists on reload.
+- [ ] Or `SUPABASE_ACCESS_TOKEN=... npm run ops:configure-pilot-auth` (see [SHIP_PROMPT.md](SHIP_PROMPT.md)).
+- [ ] Magic link → `/auth/callback` → app; session persists on reload.
+
+## Preview environment variables
+
+- [ ] `npm run ops:sync-vercel-preview-env` then enable **Preview** on secret `POSTGRES_*` in Vercel UI.
 
 ## D3 — Privacy smoke (manual)
 
