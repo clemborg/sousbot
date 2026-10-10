@@ -22,6 +22,9 @@ function apiGateway(req: Request, res: Response, next: NextFunction): void {
 
 export function createApp() {
   const app = express();
+  app.get('/api/v1/ping', (_req, res) => {
+    res.json({ ok: true });
+  });
   app.use('/api/v1', apiGateway);
   app.use(express.json({ limit: '32kb' }));
   app.use('/api/v1', healthRouter);
