@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const app = require('./dist/index.cjs') as { default: import('express').Express };
+const createApp = require('./dist/index.cjs').default as () => import('express').Express;
 
-export default app.default ?? app;
+export default createApp();

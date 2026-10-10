@@ -4,7 +4,7 @@
   "buildCommand": "cd ../.. && npm run build -w @sousbot/shared && npm run build -w @sousbot/web && npm run build -w @sousbot/api && node scripts/sync-web-to-api-public.mjs && node scripts/sync-public-to-dist.mjs",
   "functions": {
     "index.ts": {
-      "includeFiles": "dist/public/**",
+      "includeFiles": "dist/public/**,public/**",
       "maxDuration": 30
     }
   }
