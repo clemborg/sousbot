@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/error';
 import { healthRouter } from './routes/health';
 import { recipesRouter } from './routes/recipes';
 import { booksRouter } from './routes/books';
+import { installVercelPublicFallback } from './vercel-public';
 
 function apiGateway(req: Request, res: Response, next: NextFunction): void {
   let env;
@@ -29,6 +30,7 @@ export function createApp() {
   app.use('/api/v1', healthRouter);
   app.use('/api/v1', recipesRouter);
   app.use('/api/v1', booksRouter);
+  installVercelPublicFallback(app);
   app.use(errorHandler);
   return app;
 }
