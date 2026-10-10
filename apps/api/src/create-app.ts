@@ -32,14 +32,14 @@ export function createApp() {
   installVercelPublicFallback(app);
   app.get('/api/v1/debug-static', (_req, res) => {
     res.json({
-      build: 'entry-src-v5',
+      build: 'entry-src-v6',
       ...getPublicDirDiagnostics(),
     });
   });
   app.get('/api/v1/ping', (_req, res) => {
     res.json({
       ok: true,
-      build: 'entry-src-v5',
+      build: 'entry-src-v6',
       commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
     });
   });
