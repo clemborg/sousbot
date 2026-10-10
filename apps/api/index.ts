@@ -1,3 +1,6 @@
-import app from './dist/index.js';
+import { createRequire } from 'node:module';
 
-export default app;
+const require = createRequire(import.meta.url);
+const app = require('./dist/index.cjs') as { default: import('express').Express };
+
+export default app.default ?? app;

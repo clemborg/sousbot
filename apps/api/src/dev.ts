@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import app from './server-app';
 import { closePool } from './db/client';
 import { getApiEnv } from './config/env';
