@@ -36,7 +36,6 @@ export async function findPublishedRecipes(params: {
         inner join user_books ub on ub.book_id = rbr.book_id
         where rbr.recipe_id = ${recipes.id}
           and ub.user_id = ${userId}
-          and rbr.book_verified = true
       )`,
     );
   }

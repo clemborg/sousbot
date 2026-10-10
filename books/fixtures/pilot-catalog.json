@@ -1,0 +1,20 @@
+{
+  "description": "Cookbook titles for pilot shelf UI. Recipe links in pilot_shelf_links are for QA only (book_verified=false); real corpus links use import-recipes with book_verified.",
+  "pilot_shelf_links": [
+    { "book_slug": "japanese-home-cooking", "recipe_slug": "simple-miso-soup" }
+  ],
+  "items": [
+    { "title": "Salt Fat Acid Heat" },
+    { "title": "The Food Lab" },
+    { "title": "Joy of Cooking" },
+    { "title": "How to Cook Everything" },
+    { "title": "Essentials of Classic Italian Cooking" },
+    { "title": "Maangchi's Real Korean Cooking" },
+    { "title": "Japanese Home Cooking" },
+    { "title": "Vegetarian Cooking for Everyone" },
+    { "title": "Plenty" },
+    { "title": "The Complete Vegetarian Cookbook" },
+    { "title": "Mastering the Art of French Cooking, Volume 1" },
+    { "title": "The Zuni Cafe Cookbook" }
+  ]
+}

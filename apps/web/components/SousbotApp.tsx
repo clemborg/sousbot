@@ -8,6 +8,7 @@ import { RecipeCard } from '@/components/RecipeCard';
 import { api } from '@/lib/api-client';
 import { clearAuthIntent, readAuthIntent, writeAuthIntent } from '@/lib/auth-intent';
 import { friendlyDate, localToday } from '@/lib/dates';
+import { authCallbackUrl } from '@/lib/auth/site-url';
 import { supabase } from '@/lib/supabase-client';
 
 type Book = { id: string; title: string; slug: string };
@@ -207,10 +208,12 @@ export function SousbotApp({ recipeSlug: recipeSlugProp }: { recipeSlug?: string
     setAuthSending(true);
     setAuthError('');
     try {
+      const nextPath =
+        pathname + (searchParams.toString() ? '?' + searchParams.toString() : '') || '/recipes';
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: window.location.origin + pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''),
+          emailRedirectTo: authCallbackUrl(nextPath),
           shouldCreateUser: true,
         },
       });

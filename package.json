@@ -14,7 +14,11 @@
     "import:recipes": "tsx automation/ingestion/import-recipes.ts",
     "import:recipes:apply": "tsx automation/ingestion/import-recipes.ts --apply",
     "import:recipes:publish": "tsx automation/ingestion/import-recipes.ts --apply --publish",
-    "db:seed": "tsx automation/ingestion/import-recipes.ts --dir recipes/fixtures --apply --publish"
+    "db:seed": "tsx automation/ingestion/import-recipes.ts --dir recipes/fixtures --apply --publish && tsx automation/ingestion/import-books.ts --apply",
+    "db:seed:books": "tsx automation/ingestion/import-books.ts --apply",
+    "import:books": "tsx automation/ingestion/import-books.ts",
+    "ops:sync-vercel-preview-env": "node automation/ops/sync-vercel-preview-env.mjs",
+    "ops:configure-pilot-auth": "node automation/ops/configure-pilot-auth.mjs"
   },
   "devDependencies": {
     "dotenv": "^17.2.1",

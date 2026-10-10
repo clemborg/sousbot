@@ -4,18 +4,21 @@ Supabase project: `https://kkdswyfeznxrntungivm.supabase.co`.
 
 The user supplied a `sb_publishable_` client key. A publishable key is **not** a Postgres connection credential and does not permit running SQL migrations. We intentionally don't commit the actual key in the public repo; set it in local env files (or hosting env variables). Never paste or commit a Supabase `service_role` / `sb_secret_` key or database password into git.
 
-## 1. Create local environment files (Windows PowerShell)
+## 1. Create local environment file (Windows PowerShell)
 
 ```powershell
 Copy-Item apps/web/.env.example apps/web/.env
-Copy-Item apps/api/.env.example apps/api/.env
 ```
 
-Edit both copies:
-- Web: `VITE_SUPABASE_URL` already points to this project; set `VITE_SUPABASE_PUBLISHABLE_KEY` to your Supabase **publishable** key.
-- API: `SUPABASE_URL` same project; set `SUPABASE_PUBLISHABLE_KEY` to same publishable key (used for session verification).
-- API: set `DATABASE_URL` to the **PostgreSQL connection string** from Supabase Dashboard **Connect**. It includes a DB username and password, which must remain secret. If the direct host doesn't work on your connection, choose Supabase's session pooler. The example URL is a placeholder.
-- API: keep `WEB_ORIGIN=http://localhost:5173`.
+Edit `apps/web/.env`:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — project URL above.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase **publishable** key (browser).
+- `SUPABASE_URL` — same project URL (API routes verify JWTs).
+- `SUPABASE_PUBLISHABLE_KEY` — same publishable key.
+- `DATABASE_URL` — **PostgreSQL connection string** from Supabase Dashboard **Connect**. Prefer **direct** or **session pooler** for local `npm run db:seed` / migrations. Vercel production should use the **transaction pooler (port 6543)** with TLS. The example in `.env.example` is a placeholder.
+
+Optional: `WEB_ORIGIN=http://localhost:3000` when testing CORS against a custom origin.
 
 ## 2. Apply schema
 
@@ -30,24 +33,31 @@ IMPORTANT: The SQL is **not applied** by the act of committing it to GitHub. Run
 
 ## 2b. Seed dev catalog (optional)
 
-After `apps/api/.env` has a working `DATABASE_URL`:
+After `apps/web/.env` has a working `DATABASE_URL`:
 
 ```bash
 npm run db:seed
 ```
 
-This imports and **publishes** the three fixture recipes under `recipes/fixtures/` via [automation/ingestion/import-recipes.ts](../automation/ingestion/import-recipes.ts). Re-running is safe (SHA-based skip).
+This **publishes** the three fixture recipes under `recipes/fixtures/` and upserts the pilot book catalog in `books/fixtures/pilot-catalog.json` via the ingestion scripts. Re-running is safe (recipes skip on unchanged SHA; books skip on existing slug).
 
 Other commands:
 
 ```bash
 npm run import:recipes -- --dir recipes/fixtures    # dry-run validate
 npm run import:recipes:publish -- --dir recipes     # bulk publish (use with care)
+npm run import:books                                # dry-run book catalog
+npm run db:seed:books                               # books only
 ```
 
 ## 3. Set up Supabase Auth redirects
 
-In Dashboard → Authentication → URL Configuration, configure local Site URL `http://localhost:5173` and add `http://localhost:5173/**` to allowed redirect URLs. Ensure Email OTP/magic-link sign-in is enabled.
+In Dashboard → Authentication → URL Configuration:
+
+- **Local:** Site URL `http://localhost:3000`, redirect allowlist `http://localhost:3000/**`.
+- **Production:** Site URL `https://sousbot.vercel.app` (or your custom domain), plus that origin in redirect URLs. Add preview URLs only if you test magic links on Vercel previews (e.g. specific preview URLs or a controlled pattern).
+
+Ensure Email OTP / magic-link sign-in is enabled.
 
 ## 4. Install and run
 
@@ -58,11 +68,11 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173`. Web uses a Vite proxy for `/api` to the Node API at `http://localhost:4000`.
+Visit `http://localhost:3000`. The Next.js app serves UI and `/api/v1/*` on the same origin.
 
 Run `npm run build` and `npm run typecheck` before deployment.
 
-Verify API health: `http://localhost:4000/api/v1/health` should return `{"status":"ok","database":"connected"}` only after the API environment and database migration are correct.
+Verify health: `http://localhost:3000/api/v1/health` should return `{"status":"ok","database":"connected"}` only after env and migrations are correct.
 
 ## 5. Empty database until you seed or import
 
@@ -70,13 +80,13 @@ Until you run `npm run db:seed` or `npm run import:recipes:publish`, Discover sh
 
 ## Operational/security notes
 
-- Browser exposes only the publishable key; never put database connection URL/secret keys in `VITE_*` variables.
-- The Node service holds the database URL and uses a privileged connection. It validates JWTs against Supabase Auth and scopes all personal data queries by verified user ID.
-- The catalog is not directly exposed via PostgREST: new catalog tables have RLS enabled without public policies. The Express REST API provides the public recipe reads.
-- Keep public repo source code free of real connection strings and secrets; configure them in your deployment provider when chosen.
+- Browser exposes only `NEXT_PUBLIC_*` publishable keys; never put database connection URLs or secret keys in `NEXT_PUBLIC_*` variables.
+- API routes hold the database URL and use a privileged connection. They validate JWTs against Supabase Auth and scope all personal data queries by verified user ID.
+- The catalog is not directly exposed via PostgREST: catalog tables have RLS enabled without public policies. The Next.js API provides public reads for published recipes only.
+- Keep public repo source code free of real connection strings and secrets; configure them in Vercel (Production + Preview) when deploying.
 
-## Future hosting target: Vercel
+## Hosting: Vercel (Next.js)
 
-Sousbot is intended for **Vercel**, as one project rooted at `apps/api` (UI + API same origin). See [Vercel deployment plan](VERCEL_DEPLOYMENT.md) and the step-by-step [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md).
+Production uses a **single Vercel project** rooted at `apps/web` (Next.js App Router + Route Handlers under `/api/v1`). See [Vercel deployment plan](VERCEL_DEPLOYMENT.md) and [Vercel import checklist](VERCEL_IMPORT_CHECKLIST.md).
 
-For the Express API **on Vercel**, obtain the **Supabase transaction-pooler (port 6543)** connection string, not the direct host or the session pooler. Use TLS (`sslmode=require` in the connection string), a small client pool (1 per function instance), and no named prepared statements. Use a direct/session-capable connection for database migrations. Keep all connection strings out of the web bundle.
+For **Vercel Functions → Postgres**, use the Supabase **transaction pooler (port 6543)** connection string (`POSTGRES_URL` or `DATABASE_URL`), TLS (`sslmode=require`), and a small client pool. Use direct/session-capable URLs for migrations and local `--apply` imports. Keep all connection strings out of the client bundle.

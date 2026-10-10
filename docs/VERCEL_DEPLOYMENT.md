@@ -27,8 +27,20 @@ Monorepo install/build is defined in [`apps/web/vercel.json`](../apps/web/vercel
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser Supabase client |
 | `SUPABASE_URL` | API JWT verification |
 | `SUPABASE_PUBLISHABLE_KEY` | API JWT verification |
-| `DATABASE_URL` | Supabase **transaction pooler** port **6543**, TLS (`sslmode=require`); **secret** |
+| `DATABASE_URL` or `POSTGRES_URL` | Supabase **transaction pooler** port **6543**, TLS (`sslmode=require`); **secret** |
 | `WEB_ORIGIN` | Optional; defaults to `https://$VERCEL_URL` |
+
+Set the same server and `NEXT_PUBLIC_*` variables on **Preview** if you test magic links or writes on preview deployments.
+
+## Supabase Auth (required for journal + shelf)
+
+Dashboard → Authentication → URL configuration:
+
+- **Production Site URL:** `https://sousbot.vercel.app` (or custom domain).
+- **Redirect URLs:** matching origins (and preview URLs only if you use them for sign-in).
+- **Local:** `http://localhost:3000` and `http://localhost:3000/**`.
+
+See [VERCEL_IMPORT_CHECKLIST.md](VERCEL_IMPORT_CHECKLIST.md) D2–D3.
 
 ## Local dev
 

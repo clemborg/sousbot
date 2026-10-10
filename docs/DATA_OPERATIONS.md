@@ -6,6 +6,10 @@
 
 **Importer:** [automation/ingestion/import-recipes.ts](../automation/ingestion/import-recipes.ts) — dry-run by default, `--apply`, `--publish` with conservative gate (source URL + ingredients). Provenance stored in `recipe_provenance` (`origin_path`, `content_sha`).
 
+**Book catalog (shelf UI):** Recipe JSON can create `books` + `recipe_book_refs` when `cookbook` is set and `book_verified` / `cookbook_verified` is true. Fixture recipes are web-sourced and omit book claims. For pilot **My Cookbooks**, upsert titles from [books/fixtures/pilot-catalog.json](../books/fixtures/pilot-catalog.json) via [automation/ingestion/import-books.ts](../automation/ingestion/import-books.ts) (`npm run import:books` dry-run, `npm run db:seed:books` to apply). `npm run db:seed` runs fixtures publish **and** the pilot book catalog.
+
+Optional **`pilot_shelf_links`** in the same JSON create `recipe_book_refs` with `book_verified=false` and `evidence_url=pilot:shelf-qa` so signed-in users can smoke-test **My cookbooks only** without showing a cookbook badge on cards (enrichment still requires `book_verified` for display). Remove or replace these when real provenance imports land.
+
 ### Archive checklist (before bulk publish)
 
 1. Inventory all JSON under `recipes/`; record path + SHA/checksum in [research/migration-status.md](../research/migration-status.md).

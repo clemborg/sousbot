@@ -15,18 +15,18 @@ This is the sequenced execution backlog. Check items only once committed/tested;
 
 ## Phase 1 — TypeScript monorepo and backend core
 
-- [x] Configure npm workspaces: `apps/web`, `apps/api`, `packages/shared`.
+- [x] Configure npm workspaces: `apps/web`, `packages/shared`.
 - [~] Set ESLint, Prettier, TypeScript strict mode, Vitest, environment examples (strict TS + env examples yes; lint/test runners not yet).
-- [~] Create Supabase project (user-controlled), env connection config and migration system (Drizzle schema + SQL migration file; DB not applied).
-- [x] Implement catalog tables plus private user tables; constraints, indexes, documented RLS policies (RLS in SQL migration — apply to verify).
-- [x] Create Express health endpoint and validation/error middleware.
+- [x] Create Supabase project (user-controlled), env connection config and migration system (Drizzle schema + SQL migrations applied on production project).
+- [x] Implement catalog tables plus private user tables; constraints, indexes, documented RLS policies.
+- [x] Create `/api/v1/health` and validation/error handling on Route Handlers.
 - [~] Verify Supabase Auth bearer token server-side and test private per-user query scoping (middleware implemented; automated multi-user tests pending).
 - **Acceptance:** fresh DB can migrate, API starts, CI tests pass, no secrets in repo.
 
 ## Phase 2 — catalog import + browsing
 
 - [~] Build idempotent JSON importer to staging; preserve raw record and source hash (CLI + provenance table; bulk archive still pending in `recipes/`).
-- [ ] Manually publish a small verified sample. Do not bulk-publish all 155 without quality gate.
+- [x] Manually publish a small verified sample (3 fixtures on production). Do not bulk-publish all 155 without quality gate.
 - [ ] Populate canonical authors and books, source evidence, basic ingredient normalization/aliases.
 - [~] Implement public `GET /recipes`, `/recipes/:slug`, `/ingredients/suggest`, `/books`, `/authors` (core recipe/book routes yes; suggest/authors not yet).
 - [~] Build mobile-first Discover search, filters and recipe detail cards; accessible loading/error/empty states (discover + my-books filter; no URL routing yet).
@@ -44,12 +44,11 @@ This is the sequenced execution backlog. Check items only once committed/tested;
 
 ## Deployment milestone — Vercel (after database/local vertical slice)
 
-- [~] Connect **one Vercel project** rooted at `apps/api` (Express + synced Vite `public/`; vercel.json committed; project not imported).
-- [ ] Validate shared npm-workspace build + sync on Vercel; confirm same-origin `/api/v1` requests in preview and production.
-- [ ] Configure Vercel encrypted environment variables: `VITE_*` Supabase URL/publishable key, API Supabase URL/publishable key, protected `DATABASE_URL` from Supabase transaction pooler; optional `WEB_ORIGIN` for custom domain. Keep migration-only DB credentials outside the client.
-- [ ] Check SSL and Postgres pool size=1 in Functions. Verify health, ingredient search, Supabase Auth redirect and private cooking-history isolation on a deployed preview.
-- [x] Set up Vite client-side route fallback (`apps/api/vercel.json` rewrites).
-- **Acceptance:** same public web app works via Vercel, a verified signed-in user can create/revisit a dated cooking note, and there are no client-visible database credentials.
+- [x] Connect **one Vercel project** rooted at `apps/web` (Next.js; [`apps/web/vercel.json`](../apps/web/vercel.json)).
+- [x] Validate npm-workspace build on Vercel; same-origin `/api/v1` on production.
+- [~] Configure Vercel env on **Production** (`NEXT_PUBLIC_*`, `SUPABASE_*`, pooler URL). **Preview** parity and Auth redirects still owner-verify.
+- [~] Health + ingredient search on production; Supabase Auth redirect + two-user isolation **not** signed off.
+- **Acceptance:** signed-in user can create/revisit a dated cooking note on production; no client-visible database credentials.
 
 ## Phase 4 — hardening and unattended ingestion
 

@@ -14,18 +14,16 @@ Use this after local Supabase migrations and a successful `npm run db:seed` (or 
 ## D1 — Single project: `sousbot` (or your chosen name)
 
 - [ ] Vercel → **Add New Project** → import `clemborg/sousbot`.
-- [ ] When Git Import lists directories, choose **`apps/api` only** (Express). Do **not** create a second project for `apps/web`.
-- [ ] **Root Directory:** `apps/api`.
-- [ ] Confirm install/build match [apps/api/vercel.json](../apps/api/vercel.json) (monorepo root install, shared + web + api build, sync to `public/`).
+- [ ] **Root Directory:** `apps/web` (Next.js — UI and `/api/v1` same origin).
+- [ ] Confirm install/build match [apps/web/vercel.json](../apps/web/vercel.json) (monorepo root install, `@sousbot/shared` + `@sousbot/web` build).
 - [ ] Node **22+**.
-- [ ] **Environment variables** (Preview + Production — missing API vars cause `FUNCTION_INVOCATION_FAILED` or `/api` 503):
-  - [ ] `VITE_SUPABASE_URL`
-  - [ ] `VITE_SUPABASE_PUBLISHABLE_KEY`
-  - [ ] `VITE_API_BASE_URL` — **leave unset or empty** (same-origin `/api/v1`)
+- [ ] **Environment variables** (Preview + Production — missing DB/Supabase vars cause 503 on `/api/v1/*`):
+  - [ ] `NEXT_PUBLIC_SUPABASE_URL`
+  - [ ] `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
   - [ ] `SUPABASE_URL`
   - [ ] `SUPABASE_PUBLISHABLE_KEY`
-  - [ ] `DATABASE_URL` → Supabase **transaction pooler** port **6543**, TLS (`sslmode=require`)
-  - [ ] `WEB_ORIGIN` — optional; omit to use `https://$VERCEL_URL`. Set when using a **custom domain**.
+  - [ ] `DATABASE_URL` or `POSTGRES_URL` → Supabase **transaction pooler** port **6543**, TLS (`sslmode=require`)
+  - [ ] `WEB_ORIGIN` — optional; omit for default Vercel URL behavior. Set when using a **custom domain**.
 - [ ] Deploy preview; open site root loads React shell.
 - [ ] Hard refresh on `/` (SPA rewrite in `vercel.json`) — not a Vercel 404.
 - [ ] `GET https://<your-host>/api/v1/health` → `{"status":"ok","database":"connected"}`.
@@ -55,9 +53,15 @@ Use this after local Supabase migrations and a successful `npm run db:seed` (or 
 - [ ] Rollback: redeploy previous Vercel deployment; do **not** run SQL migrations from Functions.
 - [ ] One pilot user completes search → recipe → note without developer help.
 
+## Catalog seed (production DB, from your machine)
+
+- [ ] Local `apps/web/.env` with **direct/session** Postgres URL (not the 6543 pooler) for `--apply`.
+- [ ] `npm run db:seed` — publishes `recipes/fixtures` and upserts `books/fixtures/pilot-catalog.json`.
+- [ ] `GET /api/v1/books` returns items; `GET /api/v1/recipes?q=miso` returns published recipes.
+
 ## Optional local smoke before push
 
-- [ ] `npm run build` then `cd apps/api && npx vercel dev` — UI + `/api/v1/health` (CLI ≥ 47.0.5).
+- [ ] `npm run build` then `npm run dev` — UI + `http://localhost:3000/api/v1/health`.
 
 ## References
 

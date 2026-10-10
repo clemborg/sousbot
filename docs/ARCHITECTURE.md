@@ -46,7 +46,7 @@ User-data access:
 ## Frontend / backend boundaries
 
 - React owns presentation, URL query state, forms, optimistic feedback and session UI.
-- Express owns query interpretation, pagination limits, ranking, user authorization, validation, and edit audit trails.
+- Route Handlers under `/api/v1` own query interpretation, pagination limits, ranking, user authorization, validation, and error responses.
 - Postgres owns normalization, referential integrity and transactional updates. Search returns IDs and stable DTOs.
 - No arbitrary SQL from clients; parameterized queries via ORM/query builder.
 - Do not expose entire unlicensed source text through an API.
