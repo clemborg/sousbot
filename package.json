@@ -7,18 +7,21 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run build -w @sousbot/shared && concurrently -n api,web \"npm run dev -w @sousbot/api\" \"npm run dev -w @sousbot/web\"",
-    "build": "npm run build -w @sousbot/shared && npm run build -w @sousbot/api && npm run build -w @sousbot/web && node scripts/sync-web-to-api-public.mjs && node scripts/sync-public-to-dist.mjs",
-    "typecheck": "npm run build -w @sousbot/shared && npm run typecheck -w @sousbot/api && npm run typecheck -w @sousbot/web",
-    "db:generate": "npm run db:generate -w @sousbot/api",
+    "dev": "npm run build -w @sousbot/shared && npm run dev -w @sousbot/web",
+    "build": "npm run build -w @sousbot/shared && npm run build -w @sousbot/web",
+    "typecheck": "npm run build -w @sousbot/shared && npm run typecheck -w @sousbot/web",
+    "db:generate": "npm run db:generate -w @sousbot/web",
     "import:recipes": "tsx automation/ingestion/import-recipes.ts",
     "import:recipes:apply": "tsx automation/ingestion/import-recipes.ts --apply",
     "import:recipes:publish": "tsx automation/ingestion/import-recipes.ts --apply --publish",
     "db:seed": "tsx automation/ingestion/import-recipes.ts --dir recipes/fixtures --apply --publish"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0",
+    "dotenv": "^17.2.1",
+    "drizzle-orm": "^0.44.5",
+    "pg": "^8.16.3",
     "tsx": "^4.20.5",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "zod": "^4.1.0"
   }
 }

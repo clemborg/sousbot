@@ -13,7 +13,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,14 +25,3 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
-      - name: Vercel build command (apps/api root)
-        run: |
-          cd ../..
-          npm run build -w @sousbot/shared
-          npm run build -w @sousbot/web
-          npm run build -w @sousbot/api
-          node scripts/sync-web-to-api-public.mjs
-          node scripts/sync-public-to-dist.mjs
-          test -f apps/api/public/index.html
-          test -f apps/api/dist/public/index.html
-        working-directory: apps/api

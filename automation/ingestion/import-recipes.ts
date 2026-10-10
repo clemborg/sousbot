@@ -21,12 +21,22 @@ import {
   recipeProvenance,
   recipeSources,
   recipes,
-} from '../../apps/api/src/db/schema.ts';
+} from '../../apps/web/lib/db/schema.ts';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '../..');
 
-dotenv.config({ path: path.join(repoRoot, 'apps/api/.env') });
+for (const envFile of [
+  'apps/web/.env',
+  'apps/web/.env.local',
+  'apps/web/.env.vercel',
+  'apps/web/.env.production.local',
+]) {
+  dotenv.config({ path: path.join(repoRoot, envFile) });
+}
+if (!process.env.DATABASE_URL && process.env.POSTGRES_URL) {
+  process.env.DATABASE_URL = process.env.POSTGRES_URL;
+}
 
 const legacyRecipeSchema = z.object({
   slug: z.string().trim().min(1).optional(),
@@ -367,12 +377,19 @@ async function main() {
   let db: ReturnType<typeof drizzle> | null = null;
 
   if (opts.apply) {
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
     if (!databaseUrl) {
-      console.error('DATABASE_URL is required for --apply. Set it in apps/api/.env');
+      console.error('DATABASE_URL (or POSTGRES_URL) is required for --apply. Set it in apps/web/.env');
       process.exit(1);
     }
-    pool = new Pool({ connectionString: databaseUrl, max: 3 });
+    const tls =
+      /supabase(\.co|\.com)|pooler\.supabase/i.test(databaseUrl) ||
+      /[?&]sslmode=(require|verify-full|verify-ca|prefer)/i.test(databaseUrl);
+    pool = new Pool({
+      connectionString: databaseUrl,
+      max: 3,
+      ssl: tls ? { rejectUnauthorized: false } : undefined,
+    });
     db = drizzle({ client: pool });
   }
 

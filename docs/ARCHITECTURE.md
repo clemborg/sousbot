@@ -2,22 +2,21 @@
 
 ## Stack (decided)
 
-- **Frontend:** React 19 + TypeScript + Vite, React Router; Tailwind CSS/shadcn-ui as a proposed UI choice (not yet installed).
-- **Backend:** Node.js + Express + TypeScript; versioned REST endpoints under `/api/v1`.
+- **Frontend:** React 19 + TypeScript + Next.js 15 (App Router).
+- **Backend:** Next.js Route Handlers under `/api/v1` (Node runtime, Drizzle + `pg`).
 - **Database:** PostgreSQL hosted by **Supabase**, accessed by backend through **Drizzle ORM** and migration scripts.
 - **Authentication:** Supabase Auth, user JWT from web app; API verifies token server-side via Supabase Auth and derives `user_id` from the verified identity, never from client payload.
 - **Validation/shared contracts:** Zod schemas in a shared workspace.
 - **Search:** PostgreSQL relational ingredient matching, aliases and title full-text/trigram indexes. No LLM in request path for MVP.
 - **Catalog ingestion:** version-controlled raw recipe JSON and audit ledgers; idempotent import into staging; controlled promotion to published catalog.
-- **Deployment target (decided): Vercel**. One project rooted at `apps/api`: Vite build synced to `public/`, Express serves `/api/v1`. Supabase remains the database/Auth host; background recipe ingestion and auditing remain independent jobs, not resident Express processes. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
+- **Deployment target (decided): Vercel**. One Next.js project rooted at `apps/web` (UI + `/api/v1` same origin). Supabase remains the database/Auth host; ingestion stays offline. See [Vercel deployment plan](VERCEL_DEPLOYMENT.md).
 
 ## Monorepo target
 
 ```text
 sousbot/
   apps/
-    web/                  # React/Vite, routes, search, recipe detail, cook logging
-    api/                  # Express REST API, authentication, services and data access
+    web/                  # Next.js UI + /api/v1 Route Handlers, Drizzle, auth
   packages/
     shared/               # Zod DTOs, types, normalized ingredient types
   supabase/
@@ -70,8 +69,6 @@ At time of scoping, **Sousbot does not yet contain the 155 JSON recipe files** i
 
 ## Deployment-first constraints (Vercel)
 
-- Vercel supports Express through a Node.js Function. The API module exports `app` and skips `app.listen()` in the Vercel environment, while keeping the local development listener.
-- A Vercel Function instance must **not** create a 10-connection Postgres pool; use a one-connection pool on Vercel with the Supabase **transaction pooler** endpoint (port 6543). Keep the pool at module scope for warm-instance reuse, use TLS, and avoid named prepared statements. A separate direct/session connection may be used for reviewed DB migrations.
-- The browser builds from `apps/web` and calls `/api/v1` on the same host when `VITE_API_BASE_URL` is unset. `WEB_ORIGIN` defaults to `https://$VERCEL_URL` on Vercel; set explicitly for a custom domain.
-- SPA fallback and monorepo build live in `apps/api/vercel.json`; `packages/shared` must build before web and API.
-- Deploying the web and API does **not** automatically create tables or import the cookbook collection. Keep migrations and recipe ingestion separately controlled.
+- Use Supabase **transaction pooler** (port 6543) with `max: 1` per serverless instance in [`apps/web/lib/db/client.ts`](../apps/web/lib/db/client.ts).
+- `packages/shared` must build before `@sousbot/web` (`apps/web/vercel.json` build command).
+- Deploying does **not** apply migrations or import recipes; run those as separate controlled steps.
