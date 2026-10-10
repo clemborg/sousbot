@@ -7,8 +7,7 @@ export default defineConfig({
   target: 'node20',
   outDir: 'dist',
   clean: true,
-  external: ['pg'],
-  noExternal: [/^@sousbot\//, 'express', 'cors', 'drizzle-orm', 'zod', '@supabase/supabase-js'],
+  noExternal: [/^@sousbot\//, 'express', 'cors', 'drizzle-orm', 'zod', '@supabase/supabase-js', 'pg'],
   esbuildOptions(options) {
     options.banner = {
       js: 'var __import_meta_url=require("url").pathToFileURL(__filename).href;',
